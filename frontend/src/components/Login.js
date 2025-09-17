@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-import { Loader2, Pharmacy, Lock, User } from "lucide-react";
+import { Loader2, Cross, Lock, User } from "lucide-react";
 
 const Login = ({ onLogin }) => {
   const [credentials, setCredentials] = useState({ username: "", password: "" });
