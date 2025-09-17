@@ -33,12 +33,16 @@ const Login = ({ onLogin }) => {
       <div className="w-full max-w-md space-y-6 relative">
         {/* Logo and Header */}
         <div className="text-center space-y-4">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-emerald-500 to-cyan-600 rounded-2xl shadow-lg">
-            <Cross className="w-8 h-8 text-white" />
+          <div className="inline-flex items-center justify-center w-24 h-24 bg-white rounded-2xl shadow-lg p-2">
+            <img 
+              src="https://customer-assets.emergentagent.com/job_medrx-system-5/artifacts/xbj0hm2x_logo%20farmacia.jpeg" 
+              alt="Farmácia São Gonçalo"
+              className="w-full h-full object-contain rounded-xl"
+            />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Sistema Farmácia</h1>
-            <p className="text-gray-600">Faça login para acessar o sistema</p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Farmácia São Gonçalo</h1>
+            <p className="text-gray-600">O cliente em primeiro lugar</p>
           </div>
         </div>
 
