@@ -28,11 +28,15 @@ const Sidebar = ({ user, onLogout }) => {
       {/* Header */}
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-cyan-600 rounded-lg flex items-center justify-center">
-            <Cross className="w-5 h-5 text-white" />
+          <div className="w-12 h-12 bg-white rounded-lg shadow-md p-1 flex items-center justify-center">
+            <img 
+              src="https://customer-assets.emergentagent.com/job_medrx-system-5/artifacts/xbj0hm2x_logo%20farmacia.jpeg" 
+              alt="Farmácia São Gonçalo"
+              className="w-full h-full object-contain rounded-md"
+            />
           </div>
           <div>
-            <h2 className="font-bold text-gray-900">Farmácia</h2>
+            <h2 className="font-bold text-gray-900">São Gonçalo</h2>
             <p className="text-sm text-gray-500">Sistema de Gestão</p>
           </div>
         </div>
