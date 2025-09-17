@@ -7,7 +7,7 @@ import {
   Package,
   Users,
   LogOut,
-  Pharmacy,
+  Cross,
   User
 } from "lucide-react";
 
