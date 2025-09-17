@@ -463,6 +463,33 @@ async def get_produtos_validade_proxima(current_user: UserBase = Depends(get_cur
     
     return produtos_vencendo
 
+@api_router.get("/dashboard/stats")
+async def get_dashboard_stats(current_user: UserBase = Depends(get_current_user)):
+    """Retorna estatísticas gerais do dashboard"""
+    # Contar produtos
+    total_produtos = await db.produtos.count_documents({"unidade_id": current_user.unidade_id})
+    
+    # Contar clientes
+    total_clientes = await db.clientes.count_documents({"unidade_id": current_user.unidade_id})
+    
+    # Produtos com estoque baixo (menos de 10)
+    produtos_estoque_baixo = await db.produtos.count_documents({
+        "unidade_id": current_user.unidade_id,
+        "quantidade": {"$lt": 10}
+    })
+    
+    # Total de fiados pendentes
+    fiados_pendentes = await db.fiados.count_documents({
+        "status": {"$ne": "pago"}
+    })
+    
+    return {
+        "total_produtos": total_produtos,
+        "total_clientes": total_clientes,
+        "produtos_estoque_baixo": produtos_estoque_baixo,
+        "fiados_pendentes": fiados_pendentes
+    }
+
 # Include the router in the main app
 app.include_router(api_router)
 
