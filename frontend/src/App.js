@@ -91,6 +91,8 @@ function App() {
                 <Route path="/pdv" element={<PDV user={user} />} />
                 <Route path="/produtos" element={<Produtos user={user} />} />
                 <Route path="/clientes" element={<Clientes user={user} />} />
+                <Route path="/promocoes" element={<Promocoes user={user} />} />
+                <Route path="/relatorios" element={<Relatorios user={user} />} />
                 <Route path="*" element={<Navigate to="/" />} />
               </Routes>
             </div>
