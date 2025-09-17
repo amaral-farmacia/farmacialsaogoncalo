@@ -158,9 +158,9 @@ const Dashboard = ({ user }) => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-amber-100 text-sm font-medium">Vencendo</p>
+                <p className="text-amber-100 text-sm font-medium">Estoque Baixo</p>
                 <p className="text-2xl font-bold">
-                  {dashboardData.produtosVencendo.length}
+                  {dashboardData.stats.produtos_estoque_baixo}
                 </p>
               </div>
               <AlertTriangle className="h-8 w-8 text-amber-200" />
@@ -174,7 +174,7 @@ const Dashboard = ({ user }) => {
               <div>
                 <p className="text-red-100 text-sm font-medium">Fiados Pendentes</p>
                 <p className="text-2xl font-bold">
-                  {dashboardData.fiadosAtrasados.length}
+                  {dashboardData.stats.fiados_pendentes}
                 </p>
               </div>
               <Users className="h-8 w-8 text-red-200" />
@@ -182,6 +182,54 @@ const Dashboard = ({ user }) => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Quick Actions */}
+      <Card className="shadow-lg border-0">
+        <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50 border-b">
+          <CardTitle className="flex items-center gap-2 text-indigo-800">
+            <Clock className="h-5 w-5" />
+            Ações Rápidas
+          </CardTitle>
+          <CardDescription className="text-indigo-700">
+            Acesso rápido às funcionalidades principais
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Button 
+              className="h-20 bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white flex flex-col items-center justify-center gap-2"
+              onClick={() => window.location.href = '/pdv'}
+            >
+              <ShoppingCart className="h-6 w-6" />
+              <span>Nova Venda</span>
+            </Button>
+            
+            <Button 
+              className="h-20 bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white flex flex-col items-center justify-center gap-2"
+              onClick={() => window.location.href = '/produtos'}
+            >
+              <Package className="h-6 w-6" />
+              <span>Cadastrar Produto</span>
+            </Button>
+            
+            <Button 
+              className="h-20 bg-gradient-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white flex flex-col items-center justify-center gap-2"
+              onClick={() => window.location.href = '/clientes'}
+            >
+              <Users className="h-6 w-6" />
+              <span>Novo Cliente</span>
+            </Button>
+            
+            <Button 
+              className="h-20 bg-gradient-to-br from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white flex flex-col items-center justify-center gap-2"
+              onClick={() => window.location.href = '/relatorios'}
+            >
+              <TrendingUp className="h-6 w-6" />
+              <span>Ver Relatórios</span>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Vendas por Período */}
       <Card className="shadow-lg border-0">
