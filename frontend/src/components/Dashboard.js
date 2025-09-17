@@ -49,9 +49,13 @@ const Dashboard = ({ user }) => {
       // Fetch fiados
       const fiadosResponse = await axios.get('/fiados');
       
+      // Fetch estatísticas gerais
+      const statsResponse = await axios.get('/dashboard/stats');
+      
       setDashboardData({
         produtosVencendo: produtosResponse.data,
-        fiadosAtrasados: fiadosResponse.data.filter(f => f.status !== 'pago')
+        fiadosAtrasados: fiadosResponse.data.filter(f => f.status !== 'pago'),
+        stats: statsResponse.data
       });
     } catch (error) {
       toast.error('Erro ao carregar dados do dashboard');
