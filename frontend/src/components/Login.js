@@ -34,7 +34,7 @@ const Login = ({ onLogin }) => {
         {/* Logo and Header */}
         <div className="text-center space-y-4">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-emerald-500 to-cyan-600 rounded-2xl shadow-lg">
-            <Pharmacy className="w-8 h-8 text-white" />
+            <Cross className="w-8 h-8 text-white" />
           </div>
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Sistema Farmácia</h1>
