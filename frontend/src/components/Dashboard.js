@@ -20,7 +20,13 @@ const Dashboard = ({ user }) => {
   const [dashboardData, setDashboardData] = useState({
     vendas: [],
     produtosVencendo: [],
-    fiadosAtrasados: []
+    fiadosAtrasados: [],
+    stats: {
+      total_produtos: 0,
+      total_clientes: 0,
+      produtos_estoque_baixo: 0,
+      fiados_pendentes: 0
+    }
   });
   const [dateRange, setDateRange] = useState({
     inicio: new Date().toISOString().split('T')[0],
