@@ -89,6 +89,48 @@ const Produtos = ({ user }) => {
     }
   };
 
+  const handleEdit = (produto) => {
+    setProdutoEditando(produto);
+    setFormData({
+      nome: produto.nome,
+      codigo_barras: produto.codigo_barras,
+      validade: produto.validade,
+      preco: produto.preco.toString(),
+      quantidade: produto.quantidade.toString(),
+      localizacao: produto.localizacao
+    });
+    setEditDialogOpen(true);
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    
+    try {
+      const produtoData = {
+        ...formData,
+        preco: parseFloat(formData.preco),
+        quantidade: parseInt(formData.quantidade)
+      };
+      
+      await axios.put(`/produtos/${produtoEditando.id}`, produtoData);
+      toast.success('Produto atualizado com sucesso');
+      
+      setEditDialogOpen(false);
+      setProdutoEditando(null);
+      setFormData({
+        nome: "",
+        codigo_barras: "",
+        validade: "",
+        preco: "",
+        quantidade: "",
+        localizacao: ""
+      });
+      fetchProdutos();
+    } catch (error) {
+      toast.error('Erro ao atualizar produto');
+    }
+  };
+
   const isVencendoEm3Meses = (validade) => {
     const hoje = new Date();
     const dataValidade = new Date(validade);
