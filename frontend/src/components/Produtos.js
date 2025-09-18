@@ -290,17 +290,6 @@ const Produtos = ({ user }) => {
                 />
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="localizacao">Localização *</Label>
-                <Input
-                  id="localizacao"
-                  value={formData.localizacao}
-                  onChange={(e) => setFormData({...formData, localizacao: e.target.value})}
-                  placeholder="Ex: A1, B3, G5"
-                  required
-                />
-              </div>
-              
               <div className="flex gap-3 pt-4">
                 <Button type="submit" className="flex-1 bg-emerald-600 hover:bg-emerald-700">
                   Cadastrar
