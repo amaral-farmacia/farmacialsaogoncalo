@@ -375,6 +375,62 @@ const Dashboard = ({ user }) => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Modal de Estoque Baixo */}
+      <Dialog open={showEstoqueBaixo} onOpenChange={setShowEstoqueBaixo}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-amber-800">
+              <AlertTriangle className="h-5 w-5" />
+              Produtos com Estoque Baixo
+            </DialogTitle>
+            <DialogDescription>
+              Produtos que estão abaixo do estoque mínimo definido
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="max-h-96 overflow-y-auto">
+            {dashboardData.stats.produtos_estoque_baixo_detalhes.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <Package className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                <p>Nenhum produto com estoque baixo</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {dashboardData.stats.produtos_estoque_baixo_detalhes.map((produto) => (
+                  <div key={produto.id} className="p-4 border border-amber-200 rounded-lg bg-amber-50">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-semibold text-gray-900">{produto.nome}</h3>
+                      <Badge className="bg-amber-100 text-amber-800">
+                        {produto.localizacao}
+                      </Badge>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="text-gray-600">Estoque atual:</span>
+                        <span className="font-semibold text-red-600 ml-2">{produto.quantidade}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">Estoque mínimo:</span>
+                        <span className="font-semibold text-gray-800 ml-2">{produto.estoque_minimo}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          
+          <div className="flex justify-end pt-4">
+            <Button 
+              onClick={() => setShowEstoqueBaixo(false)}
+              className="bg-amber-600 hover:bg-amber-700"
+            >
+              Fechar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
