@@ -10,7 +10,10 @@ import {
   Cross,
   User,
   Percent,
-  BarChart3
+  BarChart3,
+  Building2,
+  ArrowRightLeft,
+  FileText
 } from "lucide-react";
 
 const Sidebar = ({ user, onLogout }) => {
