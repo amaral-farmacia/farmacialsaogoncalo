@@ -281,6 +281,100 @@ const Produtos = ({ user }) => {
             </form>
           </DialogContent>
         </Dialog>
+
+        {/* Dialog de Edição */}
+        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Editar Produto</DialogTitle>
+              <DialogDescription>
+                Altere as informações do produto
+              </DialogDescription>
+            </DialogHeader>
+            
+            <form onSubmit={handleEditSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit_nome">Nome do Produto *</Label>
+                <Input
+                  id="edit_nome"
+                  value={formData.nome}
+                  onChange={(e) => setFormData({...formData, nome: e.target.value})}
+                  placeholder="Ex: Paracetamol 500mg"
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit_codigo_barras">Código de Barras *</Label>
+                <Input
+                  id="edit_codigo_barras"
+                  value={formData.codigo_barras}
+                  onChange={(e) => setFormData({...formData, codigo_barras: e.target.value})}
+                  placeholder="Ex: 7896333123456"
+                  required
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit_preco">Preço (R$) *</Label>
+                  <Input
+                    id="edit_preco"
+                    type="number"
+                    step="0.01"
+                    value={formData.preco}
+                    onChange={(e) => setFormData({...formData, preco: e.target.value})}
+                    placeholder="0,00"
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="edit_quantidade">Quantidade *</Label>
+                  <Input
+                    id="edit_quantidade"
+                    type="number"
+                    value={formData.quantidade}
+                    onChange={(e) => setFormData({...formData, quantidade: e.target.value})}
+                    placeholder="0"
+                    required
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit_validade">Data de Validade *</Label>
+                <Input
+                  id="edit_validade"
+                  type="date"
+                  value={formData.validade}
+                  onChange={(e) => setFormData({...formData, validade: e.target.value})}
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit_localizacao">Localização *</Label>
+                <Input
+                  id="edit_localizacao"
+                  value={formData.localizacao}
+                  onChange={(e) => setFormData({...formData, localizacao: e.target.value})}
+                  placeholder="Ex: A1, B3, G5"
+                  required
+                />
+              </div>
+              
+              <div className="flex gap-3 pt-4">
+                <Button type="submit" className="flex-1 bg-emerald-600 hover:bg-emerald-700">
+                  Salvar Alterações
+                </Button>
+                <Button type="button" variant="outline" onClick={() => setEditDialogOpen(false)}>
+                  Cancelar
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Search and Stats */}
