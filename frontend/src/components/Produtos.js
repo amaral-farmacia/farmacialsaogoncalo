@@ -100,6 +100,7 @@ const Produtos = ({ user }) => {
       validade: produto.validade,
       preco: produto.preco.toString(),
       quantidade: produto.quantidade.toString(),
+      estoque_minimo: (produto.estoque_minimo || 10).toString(),
       localizacao: produto.localizacao
     });
     setEditDialogOpen(true);
