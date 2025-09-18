@@ -20,10 +20,6 @@ const Login = ({ onLogin }) => {
     }
   };
 
-  const handleDemoLogin = (username, password) => {
-    setCredentials({ username, password });
-  };
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-white to-cyan-50 p-4">
       <div className="absolute inset-0 opacity-30" style={{
