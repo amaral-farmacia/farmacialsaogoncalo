@@ -523,8 +523,21 @@ async def get_produtos_validade_proxima(current_user: UserBase = Depends(get_cur
         try:
             validade = datetime.fromisoformat(produto["validade"])
             if validade <= data_limite:
-                produtos_vencendo.append(produto)
-        except:
+                # Clean the product data to avoid ObjectId issues
+                produto_clean = {
+                    "id": produto.get("id", str(produto.get("_id", ""))),
+                    "nome": produto["nome"],
+                    "codigo_barras": produto["codigo_barras"],
+                    "validade": produto["validade"],
+                    "preco": float(produto["preco"]),
+                    "quantidade": int(produto["quantidade"]),
+                    "estoque_minimo": int(produto.get("estoque_minimo", 10)),
+                    "localizacao": produto["localizacao"],
+                    "created_at": produto.get("created_at", "")
+                }
+                produtos_vencendo.append(produto_clean)
+        except Exception as e:
+            print(f"Error processing product {produto.get('nome', 'unknown')}: {e}")
             continue
     
     return produtos_vencendo
