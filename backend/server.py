@@ -467,23 +467,46 @@ async def get_vendas_periodo(
     data_fim: str,
     current_user: UserBase = Depends(get_current_user)
 ):
-    # Simple aggregation for now
-    vendas = await db.vendas.find({
-        "unidade_id": current_user.unidade_id,
-        "created_at": {
-            "$gte": datetime.fromisoformat(data_inicio),
-            "$lte": datetime.fromisoformat(data_fim)
+    try:
+        # Parse dates safely
+        start_date = datetime.fromisoformat(data_inicio.replace('Z', '+00:00'))
+        end_date = datetime.fromisoformat(data_fim.replace('Z', '+00:00'))
+        
+        # Find sales in the period
+        vendas = await db.vendas.find({
+            "unidade_id": current_user.unidade_id,
+            "created_at": {
+                "$gte": start_date,
+                "$lte": end_date
+            }
+        }).to_list(1000)
+        
+        # Clean and calculate totals
+        vendas_clean = []
+        total_vendas = 0.0
+        
+        for venda in vendas:
+            venda_clean = {
+                "id": venda.get("id", str(venda.get("_id", ""))),
+                "total": float(venda["total"]),
+                "metodo_pagamento": venda["metodo_pagamento"],
+                "created_at": venda.get("created_at", "")
+            }
+            vendas_clean.append(venda_clean)
+            total_vendas += float(venda["total"])
+        
+        return {
+            "total_vendas": total_vendas,
+            "quantidade_vendas": len(vendas_clean),
+            "vendas": vendas_clean
         }
-    }).to_list(1000)
-    
-    total_vendas = sum(venda["total"] for venda in vendas)
-    quantidade_vendas = len(vendas)
-    
-    return {
-        "total_vendas": total_vendas,
-        "quantidade_vendas": quantidade_vendas,
-        "vendas": vendas
-    }
+    except Exception as e:
+        print(f"Error in vendas-periodo: {e}")
+        return {
+            "total_vendas": 0.0,
+            "quantidade_vendas": 0,
+            "vendas": []
+        }
 
 @api_router.get("/dashboard/produtos-validade")
 async def get_produtos_validade_proxima(current_user: UserBase = Depends(get_current_user)):
