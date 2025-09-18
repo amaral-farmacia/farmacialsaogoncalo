@@ -65,6 +65,7 @@ class Produto(BaseModel):
     validade: str
     preco: float
     quantidade: int
+    estoque_minimo: int = 10  # Novo campo
     localizacao: str  # ex: A1, G5
     unidade_id: str
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -75,6 +76,7 @@ class ProdutoCreate(BaseModel):
     validade: str
     preco: float
     quantidade: int
+    estoque_minimo: int = 10  # Novo campo
     localizacao: str
 
 class Cliente(BaseModel):
