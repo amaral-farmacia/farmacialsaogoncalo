@@ -130,6 +130,47 @@ class Fiado(BaseModel):
 class PagamentoFiado(BaseModel):
     valor: float
 
+class NotaFiscal(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    numero: str
+    fornecedor: str
+    data_emissao: str
+    valor_total: float
+    total_produtos: int
+    lucro_potencial: float = 0.0
+    status: str = "processada"  # processada, pendente, erro
+    arquivo_nome: str
+    produtos_extraidos: List[dict] = []
+    unidade_id: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class NotaFiscalCreate(BaseModel):
+    numero: str
+    fornecedor: str
+    data_emissao: str
+    valor_total: float
+    produtos: List[dict]
+    arquivo_nome: str
+
+class ContaPagar(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    nota_fiscal_id: str
+    fornecedor: str
+    valor: float
+    data_vencimento: str
+    status: str = "pendente"  # pendente, pago, vencido
+    data_pagamento: Optional[str] = None
+    unidade_id: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class ProdutoCusto(BaseModel):
+    produto_id: str
+    preco_custo: float
+    preco_venda: float
+    margem_lucro: float
+    data_ultima_compra: str
+    fornecedor: str
+
 # Utility functions
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
