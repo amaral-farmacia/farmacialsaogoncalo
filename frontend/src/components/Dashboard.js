@@ -25,9 +25,11 @@ const Dashboard = ({ user }) => {
       total_produtos: 0,
       total_clientes: 0,
       produtos_estoque_baixo: 0,
+      produtos_estoque_baixo_detalhes: [],
       fiados_pendentes: 0
     }
   });
+  const [showEstoqueBaixo, setShowEstoqueBaixo] = useState(false);
   const [dateRange, setDateRange] = useState({
     inicio: new Date().toISOString().split('T')[0],
     fim: new Date().toISOString().split('T')[0]
