@@ -368,8 +368,8 @@ const Clientes = ({ user }) => {
                 </div>
                 
                 {/* Action Buttons */}
-                {cliente.fiado_total > 0 && (
-                  <div className="pt-2">
+                <div className="space-y-2 pt-2">
+                  {cliente.fiado_total > 0 && (
                     <Button
                       onClick={() => {
                         setSelectedCliente(cliente);
@@ -381,8 +381,17 @@ const Clientes = ({ user }) => {
                       <DollarSign className="mr-2 h-4 w-4" />
                       Receber Pagamento
                     </Button>
-                  </div>
-                )}
+                  )}
+                  
+                  <Button
+                    onClick={() => handleEdit(cliente)}
+                    variant="outline"
+                    className="w-full border-blue-200 text-blue-700 hover:bg-blue-50"
+                  >
+                    <Edit className="mr-2 h-4 w-4" />
+                    Editar Cliente
+                  </Button>
+                </div>
                 
                 {/* Registration Date */}
                 <div className="flex items-center gap-2 text-xs text-gray-500 pt-2 border-t border-gray-200">
