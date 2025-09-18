@@ -446,6 +446,104 @@ const Dashboard = ({ user }) => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Modal de Fiados Pendentes */}
+      <Dialog open={showFiadosPendentes} onOpenChange={setShowFiadosPendentes}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-800">
+              <Users className="h-5 w-5" />
+              Clientes com Fiados Pendentes
+            </DialogTitle>
+            <DialogDescription>
+              Clientes que possuem valores em aberto no fiado
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="max-h-96 overflow-y-auto">
+            {dashboardData.fiadosAtrasados.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <Users className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                <p>Nenhum fiado pendente</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {dashboardData.fiadosAtrasados.map((fiado) => (
+                  <div key={fiado.id} className="p-4 border border-red-200 rounded-lg bg-red-50">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-gray-900 mb-1">{fiado.cliente_nome}</h3>
+                        <p className="text-sm text-gray-600">
+                          Data: {new Date(fiado.created_at).toLocaleDateString('pt-BR')}
+                        </p>
+                      </div>
+                      <Badge className={`${
+                        fiado.status === 'pendente' ? 'bg-red-100 text-red-800' :
+                        fiado.status === 'pago_parcial' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-green-100 text-green-800'
+                      }`}>
+                        {fiado.status === 'pendente' ? 'Pendente' :
+                         fiado.status === 'pago_parcial' ? 'Parcial' : 'Pago'}
+                      </Badge>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="text-gray-600">Valor total:</span>
+                        <span className="font-semibold text-gray-800 ml-2">
+                          {formatCurrency(fiado.valor)}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">Valor pago:</span>
+                        <span className="font-semibold text-green-600 ml-2">
+                          {formatCurrency(fiado.valor_pago)}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-3 pt-3 border-t border-red-200">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-gray-700">Valor pendente:</span>
+                        <span className="font-bold text-red-600">
+                          {formatCurrency(fiado.valor - fiado.valor_pago)}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex justify-end mt-3">
+                      <Button
+                        size="sm"
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                        onClick={() => {
+                          setShowFiadosPendentes(false);
+                          window.location.href = '/clientes';
+                        }}
+                      >
+                        Ir para Clientes
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          
+          <div className="flex justify-between pt-4">
+            <div className="text-sm text-gray-600">
+              Total pendente: <span className="font-semibold text-red-600">
+                {formatCurrency(dashboardData.fiadosAtrasados.reduce((acc, fiado) => acc + (fiado.valor - fiado.valor_pago), 0))}
+              </span>
+            </div>
+            <Button 
+              onClick={() => setShowFiadosPendentes(false)}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Fechar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
