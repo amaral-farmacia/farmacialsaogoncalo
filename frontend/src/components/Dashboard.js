@@ -55,12 +55,25 @@ const Dashboard = ({ user }) => {
       // Fetch estatísticas gerais
       const statsResponse = await axios.get('/dashboard/stats');
       
+      // Fetch vendas de hoje automaticamente
+      const hoje = new Date().toISOString().split('T')[0];
+      const vendasResponse = await axios.get('/dashboard/vendas-periodo', {
+        params: {
+          data_inicio: hoje + 'T00:00:00',
+          data_fim: hoje + 'T23:59:59'
+        }
+      });
+      
       setDashboardData({
         produtosVencendo: produtosResponse.data,
         fiadosAtrasados: fiadosResponse.data.filter(f => f.status !== 'pago'),
         stats: statsResponse.data
       });
+      
+      setVendasPeriodo(vendasResponse.data);
+      
     } catch (error) {
+      console.error('Erro detalhado:', error);
       toast.error('Erro ao carregar dados do dashboard');
     } finally {
       setLoading(false);
