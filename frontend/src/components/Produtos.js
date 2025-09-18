@@ -69,7 +69,8 @@ const Produtos = ({ user }) => {
       const produtoData = {
         ...formData,
         preco: parseFloat(formData.preco),
-        quantidade: parseInt(formData.quantidade)
+        quantidade: parseInt(formData.quantidade),
+        estoque_minimo: parseInt(formData.estoque_minimo)
       };
       
       await axios.post('/produtos', produtoData);
