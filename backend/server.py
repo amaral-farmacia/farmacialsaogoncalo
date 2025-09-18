@@ -675,6 +675,192 @@ async def alterar_senha_usuario(user_id: str, senha_data: dict, current_user: Us
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
     
     return {"message": "Senha alterada com sucesso"}
+
+# Notas Fiscais routes
+@api_router.post("/notas-fiscais/extrair")
+async def extrair_dados_nota_fiscal(arquivo: bytes = File(...), current_user: UserBase = Depends(get_current_user)):
+    """Extrai dados de uma nota fiscal (PDF, XML ou imagem)"""
+    try:
+        # Simular extração de dados (em produção, usar OCR ou parser XML real)
+        dados_extraidos = {
+            "numero": f"NF{datetime.now().strftime('%Y%m%d%H%M')}",
+            "fornecedor": "Distribuidora Farmacêutica Exemplo LTDA",
+            "data_emissao": datetime.now().strftime('%Y-%m-%d'),
+            "valor_total": 1250.80,
+            "produtos": [
+                {
+                    "nome": "Paracetamol 750mg - Caixa com 20 comprimidos",
+                    "codigo": "EAN123456789",
+                    "quantidade": 10,
+                    "preco_unitario": 15.50,
+                    "preco_custo": 15.50,
+                    "preco_venda": 20.15,  # Margem de 30%
+                },
+                {
+                    "nome": "Dipirona Sódica 500mg - Caixa com 10 comprimidos", 
+                    "codigo": "EAN987654321",
+                    "quantidade": 15,
+                    "preco_unitario": 12.80,
+                    "preco_custo": 12.80,
+                    "preco_venda": 16.64,  # Margem de 30%
+                },
+                {
+                    "nome": "Omeprazol 20mg - Caixa com 28 cápsulas",
+                    "codigo": "EAN456789123",
+                    "quantidade": 8,
+                    "preco_unitario": 25.90,
+                    "preco_custo": 25.90,
+                    "preco_venda": 33.67,  # Margem de 30%
+                }
+            ]
+        }
+        
+        return dados_extraidos
+        
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Erro ao processar arquivo: {str(e)}")
+
+@api_router.post("/notas-fiscais", response_model=NotaFiscal)
+async def create_nota_fiscal(nota_data: NotaFiscalCreate, current_user: UserBase = Depends(get_current_user)):
+    """Salva uma nota fiscal processada e cadastra produtos"""
+    try:
+        # Calcular lucro potencial
+        lucro_potencial = sum(
+            (produto["preco_venda"] - produto["preco_custo"]) * produto["quantidade"]
+            for produto in nota_data.produtos
+        )
+        
+        # Criar nota fiscal
+        nota_dict = nota_data.dict()
+        nota_dict.update({
+            "unidade_id": current_user.unidade_id,
+            "total_produtos": len(nota_data.produtos),
+            "lucro_potencial": lucro_potencial,
+            "produtos_extraidos": nota_data.produtos
+        })
+        
+        nota_obj = NotaFiscal(**nota_dict)
+        await db.notas_fiscais.insert_one(nota_obj.dict())
+        
+        # Cadastrar/atualizar produtos automaticamente
+        for produto_data in nota_data.produtos:
+            # Verificar se produto já existe
+            produto_existente = await db.produtos.find_one({
+                "codigo_barras": produto_data["codigo"],
+                "unidade_id": current_user.unidade_id
+            })
+            
+            if produto_existente:
+                # Atualizar quantidade e preços
+                await db.produtos.update_one(
+                    {"id": produto_existente["id"]},
+                    {
+                        "$inc": {"quantidade": produto_data["quantidade"]},
+                        "$set": {
+                            "preco": produto_data["preco_venda"],
+                            "preco_custo": produto_data["preco_custo"]
+                        }
+                    }
+                )
+            else:
+                # Criar novo produto
+                novo_produto = {
+                    "id": str(uuid.uuid4()),
+                    "nome": produto_data["nome"],
+                    "codigo_barras": produto_data["codigo"],
+                    "validade": "2025-12-31",  # Valor padrão, deve ser ajustado
+                    "preco": produto_data["preco_venda"],
+                    "preco_custo": produto_data["preco_custo"],
+                    "quantidade": produto_data["quantidade"],
+                    "estoque_minimo": 10,
+                    "localizacao": "A-ENTRADA",  # Localização padrão para produtos da nota
+                    "unidade_id": current_user.unidade_id,
+                    "created_at": datetime.now(timezone.utc)
+                }
+                await db.produtos.insert_one(novo_produto)
+        
+        # Criar conta a pagar
+        conta_pagar = {
+            "id": str(uuid.uuid4()),
+            "nota_fiscal_id": nota_obj.id,
+            "fornecedor": nota_data.fornecedor,
+            "valor": nota_data.valor_total,
+            "data_vencimento": (datetime.now() + timedelta(days=30)).strftime('%Y-%m-%d'),
+            "status": "pendente",
+            "unidade_id": current_user.unidade_id,
+            "created_at": datetime.now(timezone.utc)
+        }
+        await db.contas_pagar.insert_one(conta_pagar)
+        
+        return nota_obj
+        
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Erro ao salvar nota fiscal: {str(e)}")
+
+@api_router.get("/notas-fiscais", response_model=List[NotaFiscal])
+async def get_notas_fiscais(current_user: UserBase = Depends(get_current_user)):
+    """Lista todas as notas fiscais da unidade"""
+    notas = await db.notas_fiscais.find({"unidade_id": current_user.unidade_id}).to_list(1000)
+    result = []
+    for nota in notas:
+        nota_clean = {
+            "id": nota.get("id", str(nota.get("_id", ""))),
+            "numero": nota["numero"],
+            "fornecedor": nota["fornecedor"],
+            "data_emissao": nota["data_emissao"],
+            "valor_total": float(nota["valor_total"]),
+            "total_produtos": int(nota["total_produtos"]),
+            "lucro_potencial": float(nota.get("lucro_potencial", 0)),
+            "status": nota.get("status", "processada"),
+            "arquivo_nome": nota["arquivo_nome"],
+            "produtos_extraidos": nota.get("produtos_extraidos", []),
+            "created_at": nota.get("created_at", "")
+        }
+        result.append(nota_clean)
+    return result
+
+@api_router.get("/produtos/{produto_id}/lucro")
+async def get_lucro_produto(produto_id: str, current_user: UserBase = Depends(get_current_user)):
+    """Calcula o lucro de um produto específico"""
+    produto = await db.produtos.find_one({
+        "id": produto_id,
+        "unidade_id": current_user.unidade_id
+    })
+    
+    if not produto:
+        raise HTTPException(status_code=404, detail="Produto não encontrado")
+    
+    preco_custo = produto.get("preco_custo", 0)
+    preco_venda = produto.get("preco", 0)
+    margem_lucro = ((preco_venda - preco_custo) / preco_custo * 100) if preco_custo > 0 else 0
+    
+    return {
+        "produto_id": produto_id,
+        "nome": produto["nome"],
+        "preco_custo": preco_custo,
+        "preco_venda": preco_venda,
+        "lucro_unitario": preco_venda - preco_custo,
+        "margem_lucro": margem_lucro
+    }
+
+@api_router.get("/contas-pagar")
+async def get_contas_pagar(current_user: UserBase = Depends(get_current_user)):
+    """Lista contas a pagar da unidade"""
+    contas = await db.contas_pagar.find({"unidade_id": current_user.unidade_id}).to_list(1000)
+    result = []
+    for conta in contas:
+        conta_clean = {
+            "id": conta.get("id", str(conta.get("_id", ""))),
+            "nota_fiscal_id": conta["nota_fiscal_id"],
+            "fornecedor": conta["fornecedor"],
+            "valor": float(conta["valor"]),
+            "data_vencimento": conta["data_vencimento"],
+            "status": conta["status"],
+            "data_pagamento": conta.get("data_pagamento"),
+            "created_at": conta.get("created_at", "")
+        }
+        result.append(conta_clean)
+    return result
 app.include_router(api_router)
 
 app.add_middleware(
