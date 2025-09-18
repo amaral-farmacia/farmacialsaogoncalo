@@ -31,6 +31,7 @@ const Dashboard = ({ user }) => {
     }
   });
   const [showEstoqueBaixo, setShowEstoqueBaixo] = useState(false);
+  const [showFiadosPendentes, setShowFiadosPendentes] = useState(false);
   const [dateRange, setDateRange] = useState({
     inicio: new Date().toISOString().split('T')[0],
     fim: new Date().toISOString().split('T')[0]
