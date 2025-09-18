@@ -127,6 +127,7 @@ const Produtos = ({ user }) => {
         validade: "",
         preco: "",
         quantidade: "",
+        estoque_minimo: "10",
         localizacao: ""
       });
       fetchProdutos();
