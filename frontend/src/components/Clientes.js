@@ -106,6 +106,50 @@ const Clientes = ({ user }) => {
     }
   };
 
+  const handleEdit = (cliente) => {
+    setClienteEditando(cliente);
+    setFormData({
+      nome: cliente.nome,
+      cpf: cliente.cpf,
+      telefone: cliente.telefone
+    });
+    setEditDialogOpen(true);
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    
+    // Validação básica de CPF (apenas formato)
+    const cpfRegex = /^\d{3}\.\d{3}\.\d{3}-\d{2}$/;
+    if (!cpfRegex.test(formData.cpf)) {
+      toast.error('CPF deve estar no formato 000.000.000-00');
+      return;
+    }
+    
+    // Validação básica de telefone
+    const telefoneRegex = /^\(\d{2}\)\s\d{4,5}-\d{4}$/;
+    if (!telefoneRegex.test(formData.telefone)) {
+      toast.error('Telefone deve estar no formato (00) 00000-0000');
+      return;
+    }
+    
+    try {
+      await axios.put(`/clientes/${clienteEditando.id}`, formData);
+      toast.success('Cliente atualizado com sucesso');
+      
+      setEditDialogOpen(false);
+      setClienteEditando(null);
+      setFormData({
+        nome: "",
+        cpf: "",
+        telefone: ""
+      });
+      fetchClientes();
+    } catch (error) {
+      toast.error('Erro ao atualizar cliente');
+    }
+  };
+
   const handlePagamentoFiado = async (fiadoId) => {
     if (!valorPagamento || parseFloat(valorPagamento) <= 0) {
       toast.error('Digite um valor válido');
