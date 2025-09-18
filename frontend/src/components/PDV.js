@@ -23,6 +23,9 @@ import { toast } from "sonner";
 const PDV = ({ user }) => {
   const [carrinho, setCarrinho] = useState([]);
   const [codigoBarras, setCodigoBarras] = useState("");
+  const [produtos, setProdutos] = useState([]);
+  const [produtosFiltrados, setProdutosFiltrados] = useState([]);
+  const [mostrarSugestoes, setMostrarSugestoes] = useState(false);
   const [clientes, setClientes] = useState([]);
   const [clienteSelecionado, setClienteSelecionado] = useState("");
   const [metodoPagamento, setMetodoPagamento] = useState("");
