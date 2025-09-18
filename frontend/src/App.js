@@ -98,6 +98,7 @@ function App() {
                 {user.role === 'admin' && (
                   <>
                     <Route path="/usuarios" element={<Usuarios user={user} />} />
+                    <Route path="/notas-fiscais" element={<NotasFiscais user={user} />} />
                   </>
                 )}
                 <Route path="*" element={<Navigate to="/" />} />
