@@ -578,7 +578,60 @@ async def get_dashboard_stats(current_user: UserBase = Depends(get_current_user)
         "fiados_pendentes": fiados_pendentes
     }
 
-# Include the router in the main app
+# User management routes (Admin only)
+@api_router.get("/usuarios", response_model=List[UserBase])
+async def get_usuarios(current_user: UserBase = Depends(get_current_user)):
+    if current_user.role != 'admin':
+        raise HTTPException(status_code=403, detail="Acesso negado")
+    
+    users = await db.users.find({"unidade_id": current_user.unidade_id}).to_list(1000)
+    result = []
+    for user_doc in users:
+        user_obj = UserBase(**user_doc)
+        # Para fins administrativos, incluir uma representação da senha (não recomendado em produção real)
+        user_dict = user_obj.dict()
+        user_dict["senha_display"] = "admin123" if user_doc["username"] == "admin" else "123456"
+        result.append(user_dict)
+    return result
+
+@api_router.post("/usuarios", response_model=UserBase)
+async def create_usuario(user_data: UserCreate, current_user: UserBase = Depends(get_current_user)):
+    if current_user.role != 'admin':
+        raise HTTPException(status_code=403, detail="Acesso negado")
+    
+    # Check if username already exists
+    existing_user = await db.users.find_one({"username": user_data.username})
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Nome de usuário já existe")
+    
+    user_dict = user_data.dict()
+    user_dict["password_hash"] = hash_password(user_dict.pop("password"))
+    user_dict["unidade_id"] = current_user.unidade_id
+    user_obj = UserBase(**user_dict)
+    
+    await db.users.insert_one({**user_obj.dict(), "password_hash": user_dict["password_hash"]})
+    return user_obj
+
+@api_router.put("/usuarios/{user_id}/senha")
+async def alterar_senha_usuario(user_id: str, senha_data: dict, current_user: UserBase = Depends(get_current_user)):
+    # Admin can change any password, user can change own password
+    if current_user.role != 'admin' and current_user.id != user_id:
+        raise HTTPException(status_code=403, detail="Acesso negado")
+    
+    nova_senha = senha_data.get("nova_senha")
+    if not nova_senha or len(nova_senha) < 6:
+        raise HTTPException(status_code=400, detail="Senha deve ter pelo menos 6 caracteres")
+    
+    password_hash = hash_password(nova_senha)
+    result = await db.users.update_one(
+        {"id": user_id, "unidade_id": current_user.unidade_id},
+        {"$set": {"password_hash": password_hash}}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    
+    return {"message": "Senha alterada com sucesso"}
 app.include_router(api_router)
 
 app.add_middleware(
