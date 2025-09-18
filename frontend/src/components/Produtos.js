@@ -401,6 +401,18 @@ const Produtos = ({ user }) => {
                     </div>
                   </div>
                 )}
+                
+                {/* Botão de Editar */}
+                <div className="pt-4 border-t border-gray-200">
+                  <Button
+                    onClick={() => handleEdit(produto)}
+                    variant="outline"
+                    className="w-full border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                  >
+                    <Edit className="mr-2 h-4 w-4" />
+                    Editar Produto
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           );
