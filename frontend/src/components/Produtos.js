@@ -25,6 +25,8 @@ const Produtos = ({ user }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [produtoEditando, setProdutoEditando] = useState(null);
   const [formData, setFormData] = useState({
     nome: "",
     codigo_barras: "",
