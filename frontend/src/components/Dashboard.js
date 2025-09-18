@@ -183,6 +183,35 @@ const Dashboard = ({ user }) => {
         </Card>
       </div>
 
+        <Card className="bg-gradient-to-br from-amber-500 to-amber-600 text-white border-0 shadow-lg">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-amber-100 text-sm font-medium">Estoque Baixo</p>
+                <p className="text-2xl font-bold">
+                  {dashboardData.stats.produtos_estoque_baixo}
+                </p>
+              </div>
+              <AlertTriangle className="h-8 w-8 text-amber-200" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-red-500 to-red-600 text-white border-0 shadow-lg">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-red-100 text-sm font-medium">Fiados Pendentes</p>
+                <p className="text-2xl font-bold">
+                  {dashboardData.stats.fiados_pendentes}
+                </p>
+              </div>
+              <Users className="h-8 w-8 text-red-200" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Quick Actions */}
       <Card className="shadow-lg border-0">
         <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50 border-b">
