@@ -23,6 +23,12 @@ const Sidebar = ({ user, onLogout }) => {
     { path: "/clientes", icon: Users, label: "Clientes" },
     { path: "/promocoes", icon: Percent, label: "Promoções" },
     { path: "/relatorios", icon: BarChart3, label: "Relatórios" },
+    ...(user.role === 'admin' ? [
+      { path: "/usuarios", icon: User, label: "Usuários" },
+      { path: "/multiunidade", icon: Building2, label: "Multiunidade" },
+      { path: "/transferencias", icon: ArrowRightLeft, label: "Transferências" },
+      { path: "/nfe", icon: FileText, label: "NFe" }
+    ] : [])
   ];
 
   const isActive = (path) => location.pathname === path;
