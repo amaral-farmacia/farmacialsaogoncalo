@@ -538,11 +538,19 @@ async def get_dashboard_stats(current_user: UserBase = Depends(get_current_user)
     # Contar clientes
     total_clientes = await db.clientes.count_documents({"unidade_id": current_user.unidade_id})
     
-    # Produtos com estoque baixo (menos de 10)
-    produtos_estoque_baixo = await db.produtos.count_documents({
-        "unidade_id": current_user.unidade_id,
-        "quantidade": {"$lt": 10}
-    })
+    # Produtos com estoque baixo (quantidade <= estoque_minimo)
+    produtos = await db.produtos.find({"unidade_id": current_user.unidade_id}).to_list(1000)
+    produtos_estoque_baixo = []
+    for produto in produtos:
+        estoque_minimo = produto.get("estoque_minimo", 10)
+        if produto["quantidade"] <= estoque_minimo:
+            produtos_estoque_baixo.append({
+                "id": produto.get("id", str(produto.get("_id", ""))),
+                "nome": produto["nome"],
+                "quantidade": produto["quantidade"],
+                "estoque_minimo": estoque_minimo,
+                "localizacao": produto["localizacao"]
+            })
     
     # Total de fiados pendentes
     fiados_pendentes = await db.fiados.count_documents({
@@ -552,7 +560,8 @@ async def get_dashboard_stats(current_user: UserBase = Depends(get_current_user)
     return {
         "total_produtos": total_produtos,
         "total_clientes": total_clientes,
-        "produtos_estoque_baixo": produtos_estoque_baixo,
+        "produtos_estoque_baixo": len(produtos_estoque_baixo),
+        "produtos_estoque_baixo_detalhes": produtos_estoque_baixo,
         "fiados_pendentes": fiados_pendentes
     }
 
