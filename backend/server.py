@@ -424,8 +424,18 @@ async def get_fiados(current_user: UserBase = Depends(get_current_user)):
     for fiado in fiados:
         cliente = await db.clientes.find_one({"id": fiado["cliente_id"]})
         if cliente and cliente["unidade_id"] == current_user.unidade_id:
-            fiado["cliente_nome"] = cliente["nome"]
-            result.append(fiado)
+            # Convert ObjectId to string and clean data
+            fiado_clean = {
+                "id": fiado.get("id", str(fiado.get("_id", ""))),
+                "cliente_id": fiado["cliente_id"],
+                "venda_id": fiado["venda_id"],
+                "valor": float(fiado["valor"]),
+                "valor_pago": float(fiado.get("valor_pago", 0.0)),
+                "status": fiado.get("status", "pendente"),
+                "created_at": fiado.get("created_at", ""),
+                "cliente_nome": cliente["nome"]
+            }
+            result.append(fiado_clean)
     return result
 
 @api_router.post("/fiados/{fiado_id}/pagar")
