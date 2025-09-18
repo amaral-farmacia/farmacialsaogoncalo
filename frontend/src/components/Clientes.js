@@ -15,7 +15,8 @@ import {
   DollarSign,
   Calendar,
   AlertCircle,
-  UserCheck
+  UserCheck,
+  Edit
 } from "lucide-react";
 import { toast } from "sonner";
 
