@@ -252,36 +252,64 @@ const PDV = ({ user }) => {
                 Buscar Produto
               </CardTitle>
               <CardDescription>
-                Digite o código de barras ou use o leitor
+                Digite o código de barras ou nome do produto
               </CardDescription>
             </CardHeader>
             <CardContent className="p-6">
-              <div className="flex gap-3">
-                <Input
-                  ref={inputRef}
-                  type="text"
-                  placeholder="Código de barras do produto"
-                  value={codigoBarras}
-                  onChange={(e) => setCodigoBarras(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      buscarProduto();
-                    }
-                  }}
-                  className="text-lg h-12"
-                  disabled={buscandoProduto}
-                />
-                <Button
-                  onClick={buscarProduto}
-                  disabled={buscandoProduto || !codigoBarras.trim()}
-                  className="bg-emerald-600 hover:bg-emerald-700 h-12 px-6"
-                >
-                  {buscandoProduto ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  ) : (
-                    <Search className="h-4 w-4" />
-                  )}
-                </Button>
+              <div className="relative">
+                <div className="flex gap-3">
+                  <Input
+                    ref={inputRef}
+                    type="text"
+                    placeholder="Código de barras ou nome do produto"
+                    value={codigoBarras}
+                    onChange={(e) => setCodigoBarras(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        buscarProduto();
+                      }
+                    }}
+                    className="text-lg h-12"
+                    disabled={buscandoProduto}
+                  />
+                  <Button
+                    onClick={buscarProduto}
+                    disabled={buscandoProduto || !codigoBarras.trim()}
+                    className="bg-emerald-600 hover:bg-emerald-700 h-12 px-6"
+                  >
+                    {buscandoProduto ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    ) : (
+                      <Search className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+                
+                {/* Sugestões de Produtos */}
+                {mostrarSugestoes && (
+                  <div className="absolute top-full left-0 right-12 z-10 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto mt-1">
+                    {produtosFiltrados.map((produto) => (
+                      <div
+                        key={produto.id}
+                        className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                        onClick={() => adicionarProdutoCarrinho(produto)}
+                      >
+                        <div className="flex justify-between items-center">
+                          <div className="flex-1">
+                            <p className="font-medium text-gray-900">{produto.nome}</p>
+                            <p className="text-sm text-gray-600">Código: {produto.codigo_barras}</p>
+                            <p className="text-sm text-emerald-600">{formatCurrency(produto.preco)}</p>
+                          </div>
+                          <div className="text-right">
+                            <Badge variant="outline" className="text-xs">
+                              {produto.quantidade} un.
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
