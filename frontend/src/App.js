@@ -95,10 +95,10 @@ function App() {
                 <Route path="/clientes" element={<Clientes user={user} />} />
                 <Route path="/promocoes" element={<Promocoes user={user} />} />
                 <Route path="/relatorios" element={<Relatorios user={user} />} />
+                <Route path="/notas-fiscais" element={<NotasFiscais user={user} />} />
                 {user.role === 'admin' && (
                   <>
                     <Route path="/usuarios" element={<Usuarios user={user} />} />
-                    <Route path="/notas-fiscais" element={<NotasFiscais user={user} />} />
                   </>
                 )}
                 <Route path="*" element={<Navigate to="/" />} />
