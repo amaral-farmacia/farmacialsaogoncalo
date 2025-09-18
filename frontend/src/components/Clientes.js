@@ -472,6 +472,78 @@ const Clientes = ({ user }) => {
         </DialogContent>
       </Dialog>
 
+      {/* Dialog de Edição */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Editar Cliente</DialogTitle>
+            <DialogDescription>
+              Altere as informações do cliente
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handleEditSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit_nome">Nome Completo *</Label>
+              <Input
+                id="edit_nome"
+                value={formData.nome}
+                onChange={(e) => setFormData({...formData, nome: e.target.value})}
+                placeholder="Ex: Maria Silva Santos"
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="edit_cpf">CPF *</Label>
+              <Input
+                id="edit_cpf"
+                value={formData.cpf}
+                onChange={(e) => setFormData({...formData, cpf: e.target.value})}
+                placeholder="000.000.000-00"
+                maxLength={14}
+                required
+              />
+              <p className="text-xs text-gray-500">Formato: 000.000.000-00</p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="edit_telefone">Telefone *</Label>
+              <Input
+                id="edit_telefone"
+                value={formData.telefone}
+                onChange={(e) => setFormData({...formData, telefone: e.target.value})}
+                placeholder="(00) 00000-0000"
+                maxLength={15}
+                required
+              />
+              <p className="text-xs text-gray-500">Formato: (00) 00000-0000</p>
+            </div>
+            
+            <div className="flex gap-3 pt-4">
+              <Button type="submit" className="flex-1 bg-emerald-600 hover:bg-emerald-700">
+                Salvar Alterações
+              </Button>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => {
+                  setEditDialogOpen(false);
+                  setClienteEditando(null);
+                  setFormData({
+                    nome: "",
+                    cpf: "",
+                    telefone: ""
+                  });
+                }}
+              >
+                Cancelar
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
       {filteredClientes.length === 0 && !loading && (
         <div className="text-center py-12">
           <Users className="h-16 w-16 mx-auto mb-4 text-gray-300" />
