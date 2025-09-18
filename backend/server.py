@@ -1066,6 +1066,199 @@ async def get_contas_pagar(current_user: UserBase = Depends(get_current_user)):
         }
         result.append(conta_clean)
     return result
+
+@api_router.post("/notas-fiscais/validar-chave/{chave_acesso}")
+async def validar_chave_nfe(chave_acesso: str, current_user: UserBase = Depends(get_current_user)):
+    """Valida chave de acesso da NFe junto à SEFAZ (simulação)"""
+    try:
+        # Validação básica do formato da chave (44 dígitos)
+        if len(chave_acesso) != 44 or not chave_acesso.isdigit():
+            raise HTTPException(status_code=400, detail="Chave de acesso deve ter 44 dígitos numéricos")
+        
+        # Simulação de consulta à SEFAZ
+        # Em produção, integrar com webservice real da SEFAZ
+        validacao_result = {
+            "chave_acesso": chave_acesso,
+            "situacao": "autorizada",  # autorizada, cancelada, rejeitada
+            "data_autorizacao": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            "protocolo_autorizacao": f"135{datetime.now().strftime('%y%m%d%H%M%S')}",
+            "digest_value": "abc123def456...",  # Hash de validação
+            "valida": True,
+            "motivo": "NFe autorizada com sucesso",
+            "uf_emissao": chave_acesso[0:2],
+            "cnpj_emitente": f"{chave_acesso[6:20]}",
+            "modelo": "55",  # 55 = NFe, 65 = NFCe
+            "serie": chave_acesso[22:25],
+            "numero": chave_acesso[25:34]
+        }
+        
+        return validacao_result
+        
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Erro na validação: {str(e)}")
+
+@api_router.get("/notas-fiscais/{nota_id}/xml")
+async def download_xml_nfe(nota_id: str, current_user: UserBase = Depends(get_current_user)):
+    """Baixa o XML da NFe"""
+    try:
+        nota = await db.notas_fiscais.find_one({
+            "id": nota_id,
+            "unidade_id": current_user.unidade_id
+        })
+        
+        if not nota:
+            raise HTTPException(status_code=404, detail="Nota fiscal não encontrada")
+        
+        # Gerar XML simulado (em produção, retornar XML real armazenado)
+        xml_content = gerar_xml_nfe_simulado(nota)
+        
+        return {"xml_content": xml_content, "filename": f"NFe_{nota['numero']}.xml"}
+        
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Erro ao gerar XML: {str(e)}")
+
+def gerar_xml_nfe_simulado(nota):
+    """Gera XML de NFe simulado para demonstração"""
+    xml_template = f"""<?xml version="1.0" encoding="UTF-8"?>
+<nfeProc versao="4.00" xmlns="http://www.portalfiscal.inf.br/nfe">
+    <NFe xmlns="http://www.portalfiscal.inf.br/nfe">
+        <infNFe versao="4.00" Id="NFe{nota.get('chave_acesso', '35' + '0' * 42)}">
+            <ide>
+                <cUF>35</cUF>
+                <cNF>12345678</cNF>
+                <natOp>Venda de produtos farmacêuticos</natOp>
+                <mod>55</mod>
+                <serie>{nota.get('serie', '001')}</serie>
+                <nNF>{nota['numero']}</nNF>
+                <dhEmi>{nota['data_emissao']}T10:00:00-03:00</dhEmi>
+                <tpNF>1</tpNF>
+                <idDest>1</idDest>
+                <cMunFG>3550308</cMunFG>
+                <tpImp>1</tpImp>
+                <tpEmis>1</tpEmis>
+                <cDV>5</cDV>
+                <tpAmb>2</tpAmb>
+                <finNFe>1</finNFe>
+                <indFinal>1</indFinal>
+                <indPres>1</indPres>
+            </ide>
+            <emit>
+                <CNPJ>{nota.get('cnpj_fornecedor', '12345678000190')}</CNPJ>
+                <xNome>{nota['fornecedor']}</xNome>
+                <enderEmit>
+                    <xLgr>Rua das Indústrias</xLgr>
+                    <nro>123</nro>
+                    <xBairro>Industrial</xBairro>
+                    <cMun>3550308</cMun>
+                    <xMun>São Paulo</xMun>
+                    <UF>SP</UF>
+                    <CEP>01234567</CEP>
+                </enderEmit>
+                <IE>123456789123</IE>
+                <CRT>3</CRT>
+            </emit>
+            <dest>
+                <CNPJ>98765432000101</CNPJ>
+                <xNome>Farmácia São Gonçalo</xNome>
+                <enderDest>
+                    <xLgr>Rua Principal</xLgr>
+                    <nro>456</nro>
+                    <xBairro>Centro</xBairr>
+                    <cMun>3550308</cMun>
+                    <xMun>São Paulo</xMun>
+                    <UF>SP</UF>
+                    <CEP>01234000</CEP>
+                </enderDest>
+                <indIEDest>1</indIEDest>
+                <IE>987654321987</IE>
+            </dest>
+            <det nItem="1">
+                <prod>
+                    <cProd>001</cProd>
+                    <cEAN>7896422519991</cEAN>
+                    <xProd>Paracetamol 750mg C/20 Comp</xProd>
+                    <NCM>30049099</NCM>
+                    <CFOP>5102</CFOP>
+                    <uCom>CX</uCom>
+                    <qCom>10.0000</qCom>
+                    <vUnCom>18.4500</vUnCom>
+                    <vProd>184.50</vProd>
+                    <cEANTrib>7896422519991</cEANTrib>
+                    <uTrib>CX</uTrib>
+                    <qTrib>10.0000</qTrib>
+                    <vUnTrib>18.4500</vUnTrib>
+                    <indTot>1</indTot>
+                </prod>
+                <imposto>
+                    <ICMS>
+                        <ICMS00>
+                            <orig>0</orig>
+                            <CST>00</CST>
+                            <modBC>3</modBC>
+                            <vBC>184.50</vBC>
+                            <pICMS>7.00</pICMS>
+                            <vICMS>12.92</vICMS>
+                        </ICMS00>
+                    </ICMS>
+                </imposto>
+            </det>
+            <total>
+                <ICMSTot>
+                    <vBC>{nota['valor_total']}</vBC>
+                    <vICMS>{nota.get('valor_icms', 0)}</vICMS>
+                    <vICMSDeson>0.00</vICMSDeson>
+                    <vBCST>0.00</vBCST>
+                    <vST>0.00</vST>
+                    <vProd>{nota['valor_total']}</vProd>
+                    <vFrete>0.00</vFrete>
+                    <vSeg>0.00</vSeg>
+                    <vDesc>0.00</vDesc>
+                    <vII>0.00</vII>
+                    <vIPI>{nota.get('valor_ipi', 0)}</vIPI>
+                    <vPIS>{nota.get('valor_pis', 0)}</vPIS>
+                    <vCOFINS>{nota.get('valor_cofins', 0)}</vCOFINS>
+                    <vOutro>0.00</vOutro>
+                    <vNF>{nota['valor_total']}</vNF>
+                </ICMSTot>
+            </total>
+            <transp>
+                <modFrete>0</modFrete>
+                <transporta>
+                    <xNome>{nota.get('transportadora', 'Transportes Rápidos LTDA')}</xNome>
+                </transporta>
+                <vol>
+                    <qVol>{nota.get('quantidade_volumes', 1)}</qVol>
+                    <esp>Caixa</esp>
+                    <pesoL>{nota.get('peso_liquido', 0)}</pesoL>
+                    <pesoB>{nota.get('peso_bruto', 0)}</pesoB>
+                </vol>
+            </transp>
+            <pag>
+                <detPag>
+                    <tPag>15</tPag>
+                    <vPag>{nota['valor_total']}</vPag>
+                </detPag>
+            </pag>
+            <infAdic>
+                <infCpl>{nota.get('observacoes', 'Nota fiscal de compra para revenda.')}</infCpl>
+            </infAdic>
+        </infNFe>
+    </NFe>
+    <protNFe versao="4.00">
+        <infProt>
+            <tpAmb>2</tpAmb>
+            <verAplic>SP_NFE_PL009_V4</verAplic>
+            <chNFe>{nota.get('chave_acesso', '35' + '0' * 42)}</chNFe>
+            <dhRecbto>{nota['data_emissao']}T10:05:00-03:00</dhRecbto>
+            <nProt>135{datetime.now().strftime('%y%m%d%H%M%S')}</nProt>
+            <digVal>abc123def456ghi789...</digVal>
+            <cStat>100</cStat>
+            <xMotivo>Autorizado o uso da NF-e</xMotivo>
+        </infProt>
+    </protNFe>
+</nfeProc>"""
+    
+    return xml_template
 app.include_router(api_router)
 
 app.add_middleware(
