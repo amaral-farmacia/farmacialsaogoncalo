@@ -254,6 +254,31 @@ const Produtos = ({ user }) => {
                 </div>
               </div>
               
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="estoque_minimo">Estoque Mínimo *</Label>
+                  <Input
+                    id="estoque_minimo"
+                    type="number"
+                    value={formData.estoque_minimo}
+                    onChange={(e) => setFormData({...formData, estoque_minimo: e.target.value})}
+                    placeholder="10"
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="localizacao">Localização *</Label>
+                  <Input
+                    id="localizacao"
+                    value={formData.localizacao}
+                    onChange={(e) => setFormData({...formData, localizacao: e.target.value})}
+                    placeholder="Ex: A1, B3, G5"
+                    required
+                  />
+                </div>
+              </div>
+              
               <div className="space-y-2">
                 <Label htmlFor="validade">Data de Validade *</Label>
                 <Input
