@@ -355,6 +355,21 @@ async def create_cliente(cliente_data: ClienteCreate, current_user: UserBase = D
     await db.clientes.insert_one(cliente_obj.dict())
     return cliente_obj
 
+@api_router.put("/clientes/{cliente_id}", response_model=Cliente)
+async def update_cliente(cliente_id: str, cliente_data: ClienteCreate, current_user: UserBase = Depends(get_current_user)):
+    cliente_dict = cliente_data.dict()
+    
+    result = await db.clientes.update_one(
+        {"id": cliente_id, "unidade_id": current_user.unidade_id},
+        {"$set": cliente_dict}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Cliente não encontrado")
+    
+    updated_cliente = await db.clientes.find_one({"id": cliente_id})
+    return Cliente(**updated_cliente)
+
 # Sales routes
 @api_router.post("/vendas", response_model=Venda)
 async def create_venda(venda_data: VendaCreate, current_user: UserBase = Depends(get_current_user)):
