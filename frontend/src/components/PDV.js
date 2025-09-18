@@ -83,39 +83,42 @@ const PDV = ({ user }) => {
     try {
       const response = await axios.get(`/produtos/buscar/${codigoBarras}`);
       const produto = response.data;
-      
-      // Verificar se produto já está no carrinho
-      const itemExistente = carrinho.find(item => item.id === produto.id);
-      
-      if (itemExistente) {
-        if (itemExistente.quantidade < produto.quantidade) {
-          setCarrinho(carrinho.map(item =>
-            item.id === produto.id
-              ? { ...item, quantidade: item.quantidade + 1 }
-              : item
-          ));
-          toast.success('Quantidade atualizada no carrinho');
-        } else {
-          toast.error('Estoque insuficiente');
-        }
-      } else {
-        if (produto.quantidade > 0) {
-          setCarrinho([...carrinho, { ...produto, quantidade: 1 }]);
-          toast.success('Produto adicionado ao carrinho');
-        } else {
-          toast.error('Produto sem estoque');
-        }
-      }
-      
-      setCodigoBarras("");
-      if (inputRef.current) {
-        inputRef.current.focus();
-      }
+      adicionarProdutoCarrinho(produto);
     } catch (error) {
       toast.error('Produto não encontrado');
-      setCodigoBarras("");
     } finally {
       setBuscandoProduto(false);
+    }
+  };
+
+  const adicionarProdutoCarrinho = (produto) => {
+    // Verificar se produto já está no carrinho
+    const itemExistente = carrinho.find(item => item.id === produto.id);
+    
+    if (itemExistente) {
+      if (itemExistente.quantidade < produto.quantidade) {
+        setCarrinho(carrinho.map(item =>
+          item.id === produto.id
+            ? { ...item, quantidade: item.quantidade + 1 }
+            : item
+        ));
+        toast.success('Quantidade atualizada no carrinho');
+      } else {
+        toast.error('Estoque insuficiente');
+      }
+    } else {
+      if (produto.quantidade > 0) {
+        setCarrinho([...carrinho, { ...produto, quantidade: 1 }]);
+        toast.success('Produto adicionado ao carrinho');
+      } else {
+        toast.error('Produto sem estoque');
+      }
+    }
+    
+    setCodigoBarras("");
+    setMostrarSugestoes(false);
+    if (inputRef.current) {
+      inputRef.current.focus();
     }
   };
 
