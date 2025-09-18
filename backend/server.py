@@ -195,6 +195,33 @@ class ContaPagar(BaseModel):
     unidade_id: str
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+class Boleto(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    fornecedor: str
+    valor: float
+    data_vencimento: str
+    descricao: str = ""
+    categoria: str = "medicamentos"
+    numero_boleto: str = ""
+    codigo_barras: str = ""
+    status: str = "pendente"  # pendente, pago, vencido
+    data_pagamento: Optional[str] = None
+    unidade_id: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class BoletoCreate(BaseModel):
+    fornecedor: str
+    valor: float
+    data_vencimento: str
+    descricao: str = ""
+    categoria: str = "medicamentos"
+    numero_boleto: str = ""
+    codigo_barras: str = ""
+
+class PagamentoBoleto(BaseModel):
+    data_pagamento: str
+    valor_pago: float
+
 class ProdutoCusto(BaseModel):
     produto_id: str
     preco_custo: float
