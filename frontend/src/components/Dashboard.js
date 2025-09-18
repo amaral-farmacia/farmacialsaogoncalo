@@ -156,7 +156,7 @@ const Dashboard = ({ user }) => {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-amber-500 to-amber-600 text-white border-0 shadow-lg">
+        <Card className="bg-gradient-to-br from-amber-500 to-amber-600 text-white border-0 shadow-lg cursor-pointer hover:scale-105 transition-transform" onClick={() => setShowEstoqueBaixo(true)}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -164,6 +164,7 @@ const Dashboard = ({ user }) => {
                 <p className="text-2xl font-bold">
                   {dashboardData.stats.produtos_estoque_baixo}
                 </p>
+                <p className="text-xs text-amber-200 mt-1">Clique para ver</p>
               </div>
               <AlertTriangle className="h-8 w-8 text-amber-200" />
             </div>
