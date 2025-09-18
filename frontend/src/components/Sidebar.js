@@ -30,7 +30,7 @@ const Sidebar = ({ user, onLogout }) => {
       { path: "/usuarios", icon: User, label: "Usuários" },
       { path: "/multiunidade", icon: Building2, label: "Multiunidade" },
       { path: "/transferencias", icon: ArrowRightLeft, label: "Transferências" },
-      { path: "/nfe", icon: FileText, label: "NFe" }
+      { path: "/notas-fiscais", icon: FileText, label: "Notas Fiscais" }
     ] : [])
   ];
 
