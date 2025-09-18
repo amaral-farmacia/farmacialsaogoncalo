@@ -11,6 +11,7 @@ import Produtos from "./components/Produtos";
 import Clientes from "./components/Clientes";
 import Promocoes from "./components/Promocoes";
 import Relatorios from "./components/Relatorios";
+import Usuarios from "./components/Usuarios";
 import Sidebar from "./components/Sidebar";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
