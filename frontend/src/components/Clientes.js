@@ -25,6 +25,8 @@ const Clientes = ({ user }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [clienteEditando, setClienteEditando] = useState(null);
   const [fiadoDialogOpen, setFiadoDialogOpen] = useState(false);
   const [selectedCliente, setSelectedCliente] = useState(null);
   const [fiados, setFiados] = useState([]);
