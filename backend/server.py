@@ -315,6 +315,22 @@ async def create_produto(produto_data: ProdutoCreate, current_user: UserBase = D
     await db.produtos.insert_one(produto_obj.dict())
     return produto_obj
 
+@api_router.put("/produtos/{produto_id}", response_model=Produto)
+async def update_produto(produto_id: str, produto_data: ProdutoCreate, current_user: UserBase = Depends(get_current_user)):
+    produto_dict = produto_data.dict()
+    produto_dict["unidade_id"] = current_user.unidade_id
+    
+    result = await db.produtos.update_one(
+        {"id": produto_id, "unidade_id": current_user.unidade_id},
+        {"$set": produto_dict}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Produto não encontrado")
+    
+    updated_produto = await db.produtos.find_one({"id": produto_id})
+    return Produto(**updated_produto)
+
 @api_router.get("/produtos/buscar/{codigo}")
 async def buscar_produto_por_codigo(codigo: str, current_user: UserBase = Depends(get_current_user)):
     produto = await db.produtos.find_one({
