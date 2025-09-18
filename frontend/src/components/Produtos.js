@@ -362,15 +362,29 @@ const Produtos = ({ user }) => {
                 </div>
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="edit_validade">Data de Validade *</Label>
-                <Input
-                  id="edit_validade"
-                  type="date"
-                  value={formData.validade}
-                  onChange={(e) => setFormData({...formData, validade: e.target.value})}
-                  required
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit_validade">Data de Validade *</Label>
+                  <Input
+                    id="edit_validade"
+                    type="date"
+                    value={formData.validade}
+                    onChange={(e) => setFormData({...formData, validade: e.target.value})}
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="edit_estoque_minimo">Estoque Mínimo *</Label>
+                  <Input
+                    id="edit_estoque_minimo"
+                    type="number"
+                    value={formData.estoque_minimo}
+                    onChange={(e) => setFormData({...formData, estoque_minimo: e.target.value})}
+                    placeholder="10"
+                    required
+                  />
+                </div>
               </div>
               
               <div className="space-y-2">
