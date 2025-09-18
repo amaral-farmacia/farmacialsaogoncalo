@@ -36,11 +36,36 @@ const PDV = ({ user }) => {
 
   useEffect(() => {
     fetchClientes();
+    fetchProdutos();
     // Focus no input de código de barras
     if (inputRef.current) {
       inputRef.current.focus();
     }
   }, []);
+
+  useEffect(() => {
+    // Filtrar produtos baseado na busca
+    if (codigoBarras.length > 0) {
+      const filtrados = produtos.filter(produto => 
+        produto.nome.toLowerCase().includes(codigoBarras.toLowerCase()) ||
+        produto.codigo_barras.includes(codigoBarras)
+      );
+      setProdutosFiltrados(filtrados);
+      setMostrarSugestoes(filtrados.length > 0);
+    } else {
+      setProdutosFiltrados([]);
+      setMostrarSugestoes(false);
+    }
+  }, [codigoBarras, produtos]);
+
+  const fetchProdutos = async () => {
+    try {
+      const response = await axios.get('/produtos');
+      setProdutos(response.data);
+    } catch (error) {
+      toast.error('Erro ao carregar produtos');
+    }
+  };
 
   const fetchClientes = async () => {
     try {
