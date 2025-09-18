@@ -133,24 +133,56 @@ class PagamentoFiado(BaseModel):
 class NotaFiscal(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     numero: str
+    serie: str = "001"
+    chave_acesso: str = ""
     fornecedor: str
+    cnpj_fornecedor: str = ""
     data_emissao: str
+    data_vencimento: str = ""
     valor_total: float
+    valor_produtos: float = 0.0
+    valor_icms: float = 0.0
+    valor_ipi: float = 0.0
+    valor_pis: float = 0.0
+    valor_cofins: float = 0.0
     total_produtos: int
     lucro_potencial: float = 0.0
+    margem_media: float = 0.0
     status: str = "processada"  # processada, pendente, erro
     arquivo_nome: str
+    tipo_arquivo: str = "xml"  # xml, pdf, imagem
     produtos_extraidos: List[dict] = []
+    observacoes: str = ""
+    condicoes_pagamento: str = ""
+    transportadora: str = ""
+    peso_bruto: float = 0.0
+    peso_liquido: float = 0.0
+    quantidade_volumes: int = 0
     unidade_id: str
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class NotaFiscalCreate(BaseModel):
     numero: str
+    serie: str = "001"
+    chave_acesso: str = ""
     fornecedor: str
+    cnpj_fornecedor: str = ""
     data_emissao: str
+    data_vencimento: str = ""
     valor_total: float
+    valor_icms: float = 0.0
+    valor_ipi: float = 0.0
+    valor_pis: float = 0.0
+    valor_cofins: float = 0.0
     produtos: List[dict]
     arquivo_nome: str
+    tipo_arquivo: str = "xml"
+    observacoes: str = ""
+    condicoes_pagamento: str = ""
+    transportadora: str = ""
+    peso_bruto: float = 0.0
+    peso_liquido: float = 0.0
+    quantidade_volumes: int = 0
 
 class ContaPagar(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
