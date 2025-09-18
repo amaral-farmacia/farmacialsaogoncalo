@@ -106,46 +106,6 @@ const Login = ({ onLogin }) => {
                 )}
               </Button>
             </form>
-
-            {/* Demo Credentials */}
-            <div className="mt-8 pt-6 border-t border-gray-200">
-              <p className="text-sm text-gray-600 mb-4 text-center">Credenciais de demonstração:</p>
-              <div className="grid grid-cols-1 gap-3">
-                <div className="bg-gradient-to-r from-emerald-50 to-cyan-50 p-3 rounded-lg border border-emerald-100">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="font-semibold text-emerald-800">Administrador</p>
-                      <p className="text-sm text-emerald-600">admin / admin123</p>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDemoLogin("admin", "admin123")}
-                      className="border-emerald-200 text-emerald-700 hover:bg-emerald-50"
-                    >
-                      Usar
-                    </Button>
-                  </div>
-                </div>
-                
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-3 rounded-lg border border-blue-100">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="font-semibold text-blue-800">Colaborador</p>
-                      <p className="text-sm text-blue-600">colab1 / 123456</p>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDemoLogin("colab1", "123456")}
-                      className="border-blue-200 text-blue-700 hover:bg-blue-50"
-                    >
-                      Usar
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
           </CardContent>
         </Card>
 
