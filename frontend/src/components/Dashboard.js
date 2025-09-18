@@ -186,7 +186,7 @@ const Dashboard = ({ user }) => {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-red-500 to-red-600 text-white border-0 shadow-lg">
+        <Card className="bg-gradient-to-br from-red-500 to-red-600 text-white border-0 shadow-lg cursor-pointer hover:scale-105 transition-transform" onClick={() => setShowFiadosPendentes(true)}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -194,6 +194,7 @@ const Dashboard = ({ user }) => {
                 <p className="text-2xl font-bold">
                   {dashboardData.stats.fiados_pendentes}
                 </p>
+                <p className="text-xs text-red-200 mt-1">Clique para ver</p>
               </div>
               <Users className="h-8 w-8 text-red-200" />
             </div>
