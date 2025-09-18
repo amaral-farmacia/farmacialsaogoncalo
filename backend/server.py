@@ -1286,6 +1286,98 @@ def gerar_xml_nfe_simulado(nota):
 </nfeProc>"""
     
     return xml_template
+
+# Boletos routes
+@api_router.get("/boletos")
+async def get_boletos(current_user: UserBase = Depends(get_current_user)):
+    """Lista todos os boletos da unidade"""
+    boletos = await db.boletos.find({"unidade_id": current_user.unidade_id}).to_list(1000)
+    result = []
+    for boleto in boletos:
+        # Determinar status baseado na data
+        hoje = datetime.now().date()
+        vencimento = datetime.fromisoformat(boleto["data_vencimento"]).date()
+        status = boleto.get("status", "pendente")
+        
+        if status == "pendente" and vencimento < hoje:
+            status = "vencido"
+            # Atualizar no banco
+            await db.boletos.update_one(
+                {"id": boleto["id"]},
+                {"$set": {"status": "vencido"}}
+            )
+        
+        boleto_clean = {
+            "id": boleto.get("id", str(boleto.get("_id", ""))),
+            "fornecedor": boleto["fornecedor"],
+            "valor": float(boleto["valor"]),
+            "data_vencimento": boleto["data_vencimento"],
+            "descricao": boleto.get("descricao", ""),
+            "categoria": boleto.get("categoria", "medicamentos"),
+            "numero_boleto": boleto.get("numero_boleto", ""),
+            "status": status,
+            "data_pagamento": boleto.get("data_pagamento"),
+            "created_at": boleto.get("created_at", "")
+        }
+        result.append(boleto_clean)
+    
+    return result
+
+@api_router.post("/boletos", response_model=Boleto)
+async def create_boleto(boleto_data: BoletoCreate, current_user: UserBase = Depends(get_current_user)):
+    """Cria um novo boleto"""
+    boleto_dict = boleto_data.dict()
+    boleto_dict["unidade_id"] = current_user.unidade_id
+    boleto_obj = Boleto(**boleto_dict)
+    await db.boletos.insert_one(boleto_obj.dict())
+    return boleto_obj
+
+@api_router.put("/boletos/{boleto_id}/pagar")
+async def pagar_boleto(boleto_id: str, pagamento: PagamentoBoleto, current_user: UserBase = Depends(get_current_user)):
+    """Marca um boleto como pago"""
+    result = await db.boletos.update_one(
+        {"id": boleto_id, "unidade_id": current_user.unidade_id},
+        {"$set": {
+            "status": "pago",
+            "data_pagamento": pagamento.data_pagamento
+        }}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Boleto não encontrado")
+    
+    return {"message": "Boleto marcado como pago"}
+
+@api_router.get("/boletos/dashboard")
+async def get_boletos_dashboard(current_user: UserBase = Depends(get_current_user)):
+    """Retorna estatísticas de boletos para o dashboard"""
+    boletos = await db.boletos.find({"unidade_id": current_user.unidade_id}).to_list(1000)
+    
+    hoje = datetime.now().date()
+    vencidos = []
+    aPagar = []
+    pagos = []
+    
+    for boleto in boletos:
+        vencimento = datetime.fromisoformat(boleto["data_vencimento"]).date()
+        status = boleto.get("status", "pendente")
+        
+        if status == "pago":
+            pagos.append(boleto)
+        elif vencimento < hoje:
+            vencidos.append(boleto)
+        else:
+            aPagar.append(boleto)
+    
+    return {
+        "vencidos": len(vencidos),
+        "vencidos_valor": sum(b["valor"] for b in vencidos),
+        "vencidos_detalhes": vencidos[:5],  # Top 5 para dashboard
+        "a_pagar": len(aPagar),
+        "a_pagar_valor": sum(b["valor"] for b in aPagar),
+        "pagos": len(pagos),
+        "pagos_valor": sum(b["valor"] for b in pagos)
+    }
 app.include_router(api_router)
 
 app.add_middleware(
