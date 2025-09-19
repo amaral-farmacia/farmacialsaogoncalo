@@ -13,7 +13,9 @@ import {
   BarChart3,
   Building2,
   ArrowRightLeft,
-  FileText
+  FileText,
+  Receipt,
+  Calculator
 } from "lucide-react";
 
 const Sidebar = ({ user, onLogout }) => {
@@ -26,11 +28,11 @@ const Sidebar = ({ user, onLogout }) => {
     { path: "/clientes", icon: Users, label: "Clientes" },
     { path: "/promocoes", icon: Percent, label: "Promoções" },
     { path: "/relatorios", icon: BarChart3, label: "Relatórios" },
+    { path: "/boletos", icon: Receipt, label: "Boletos" },
+    { path: "/fechamento", icon: Calculator, label: "Fechamento" },
     ...(user.role === 'admin' ? [
       { path: "/usuarios", icon: User, label: "Usuários" },
-      { path: "/multiunidade", icon: Building2, label: "Multiunidade" },
-      { path: "/transferencias", icon: ArrowRightLeft, label: "Transferências" },
-      { path: "/notas-fiscais", icon: FileText, label: "Notas Fiscais" }
+      { path: "/notas-fiscais", icon: FileText, label: "NFe" }
     ] : [])
   ];
 

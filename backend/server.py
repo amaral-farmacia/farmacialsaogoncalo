@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, status, File
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, status, File, UploadFile
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -66,8 +66,9 @@ class Produto(BaseModel):
     codigo_barras: str
     validade: str
     preco: float
+    preco_custo: float = 0.0
     quantidade: int
-    estoque_minimo: int = 10  # Novo campo
+    estoque_minimo: int = 10
     localizacao: str  # ex: A1, G5
     unidade_id: str
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -77,8 +78,9 @@ class ProdutoCreate(BaseModel):
     codigo_barras: str
     validade: str
     preco: float
+    preco_custo: float = 0.0
     quantidade: int
-    estoque_minimo: int = 10  # Novo campo
+    estoque_minimo: int = 10
     localizacao: str
 
 class Cliente(BaseModel):
@@ -130,71 +132,6 @@ class Fiado(BaseModel):
 class PagamentoFiado(BaseModel):
     valor: float
 
-class NotaFiscal(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    numero: str
-    serie: str = "001"
-    chave_acesso: str = ""
-    fornecedor: str
-    cnpj_fornecedor: str = ""
-    data_emissao: str
-    data_vencimento: str = ""
-    valor_total: float
-    valor_produtos: float = 0.0
-    valor_icms: float = 0.0
-    valor_ipi: float = 0.0
-    valor_pis: float = 0.0
-    valor_cofins: float = 0.0
-    total_produtos: int
-    lucro_potencial: float = 0.0
-    margem_media: float = 0.0
-    status: str = "processada"  # processada, pendente, erro
-    arquivo_nome: str
-    tipo_arquivo: str = "xml"  # xml, pdf, imagem
-    produtos_extraidos: List[dict] = []
-    observacoes: str = ""
-    condicoes_pagamento: str = ""
-    transportadora: str = ""
-    peso_bruto: float = 0.0
-    peso_liquido: float = 0.0
-    quantidade_volumes: int = 0
-    unidade_id: str
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-
-class NotaFiscalCreate(BaseModel):
-    numero: str
-    serie: str = "001"
-    chave_acesso: str = ""
-    fornecedor: str
-    cnpj_fornecedor: str = ""
-    data_emissao: str
-    data_vencimento: str = ""
-    valor_total: float
-    valor_icms: float = 0.0
-    valor_ipi: float = 0.0
-    valor_pis: float = 0.0
-    valor_cofins: float = 0.0
-    produtos: List[dict]
-    arquivo_nome: str
-    tipo_arquivo: str = "xml"
-    observacoes: str = ""
-    condicoes_pagamento: str = ""
-    transportadora: str = ""
-    peso_bruto: float = 0.0
-    peso_liquido: float = 0.0
-    quantidade_volumes: int = 0
-
-class ContaPagar(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    nota_fiscal_id: str
-    fornecedor: str
-    valor: float
-    data_vencimento: str
-    status: str = "pendente"  # pendente, pago, vencido
-    data_pagamento: Optional[str] = None
-    unidade_id: str
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-
 class Boleto(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     fornecedor: str
@@ -221,14 +158,6 @@ class BoletoCreate(BaseModel):
 class PagamentoBoleto(BaseModel):
     data_pagamento: str
     valor_pago: float
-
-class ProdutoCusto(BaseModel):
-    produto_id: str
-    preco_custo: float
-    preco_venda: float
-    margem_lucro: float
-    data_ultima_compra: str
-    fornecedor: str
 
 # Utility functions
 def hash_password(password: str) -> str:
@@ -319,7 +248,7 @@ async def init_db():
         
         await db.users.insert_many(users)
         
-        # Create sample products
+        # Create sample products with cost prices
         produtos = [
             {
                 "id": str(uuid.uuid4()),
@@ -327,7 +256,9 @@ async def init_db():
                 "codigo_barras": "7896333123456",
                 "validade": "2025-12-31",
                 "preco": 12.50,
+                "preco_custo": 8.20,
                 "quantidade": 100,
+                "estoque_minimo": 20,
                 "localizacao": "A1",
                 "unidade_id": unidade_id,
                 "created_at": datetime.now(timezone.utc)
@@ -338,7 +269,9 @@ async def init_db():
                 "codigo_barras": "7896333123457",
                 "validade": "2025-08-15",
                 "preco": 8.90,
+                "preco_custo": 6.10,
                 "quantidade": 75,
+                "estoque_minimo": 15,
                 "localizacao": "A2",
                 "unidade_id": unidade_id,
                 "created_at": datetime.now(timezone.utc)
@@ -349,7 +282,9 @@ async def init_db():
                 "codigo_barras": "7896333123458",
                 "validade": "2025-03-20",
                 "preco": 25.80,
-                "quantidade": 50,
+                "preco_custo": 18.50,
+                "quantidade": 8,
+                "estoque_minimo": 10,
                 "localizacao": "B1",
                 "unidade_id": unidade_id,
                 "created_at": datetime.now(timezone.utc)
@@ -381,6 +316,49 @@ async def init_db():
         ]
         
         await db.clientes.insert_many(clientes)
+
+        # Create sample boletos
+        boletos = [
+            {
+                "id": str(uuid.uuid4()),
+                "fornecedor": "Cimed",
+                "valor": 1000.00,
+                "data_vencimento": "2025-09-25",
+                "descricao": "Compra de medicamentos - NF 12345",
+                "categoria": "medicamentos",
+                "numero_boleto": "123456789",
+                "status": "pendente",
+                "unidade_id": unidade_id,
+                "created_at": datetime.now(timezone.utc)
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "fornecedor": "Boticário",
+                "valor": 500.00,
+                "data_vencimento": "2025-09-15",
+                "descricao": "Material de higiene e cosméticos",
+                "categoria": "material",
+                "numero_boleto": "987654321",
+                "status": "vencido",
+                "unidade_id": unidade_id,
+                "created_at": datetime.now(timezone.utc)
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "fornecedor": "Distribuidora São Paulo",
+                "valor": 2500.00,
+                "data_vencimento": "2025-09-10",
+                "descricao": "Medicamentos diversos",
+                "categoria": "medicamentos", 
+                "numero_boleto": "456789123",
+                "status": "pago",
+                "data_pagamento": "2025-09-10",
+                "unidade_id": unidade_id,
+                "created_at": datetime.now(timezone.utc)
+            }
+        ]
+        
+        await db.boletos.insert_many(boletos)
 
 # Authentication routes
 @api_router.post("/auth/login", response_model=Token)
@@ -564,6 +542,140 @@ async def pagar_fiado(fiado_id: str, pagamento: PagamentoFiado, current_user: Us
     
     return {"message": "Pagamento registrado com sucesso"}
 
+# Boletos routes
+@api_router.get("/boletos")
+async def get_boletos(current_user: UserBase = Depends(get_current_user)):
+    """Lista todos os boletos da unidade"""
+    boletos = await db.boletos.find({"unidade_id": current_user.unidade_id}).to_list(1000)
+    result = []
+    for boleto in boletos:
+        # Determinar status baseado na data
+        hoje = datetime.now().date()
+        vencimento = datetime.fromisoformat(boleto["data_vencimento"]).date()
+        status = boleto.get("status", "pendente")
+        
+        if status == "pendente" and vencimento < hoje:
+            status = "vencido"
+            # Atualizar no banco
+            await db.boletos.update_one(
+                {"id": boleto["id"]},
+                {"$set": {"status": "vencido"}}
+            )
+        
+        boleto_clean = {
+            "id": boleto.get("id", str(boleto.get("_id", ""))),
+            "fornecedor": boleto["fornecedor"],
+            "valor": float(boleto["valor"]),
+            "data_vencimento": boleto["data_vencimento"],
+            "descricao": boleto.get("descricao", ""),
+            "categoria": boleto.get("categoria", "medicamentos"),
+            "numero_boleto": boleto.get("numero_boleto", ""),
+            "status": status,
+            "data_pagamento": boleto.get("data_pagamento"),
+            "created_at": boleto.get("created_at", "")
+        }
+        result.append(boleto_clean)
+    
+    return result
+
+@api_router.post("/boletos", response_model=Boleto)
+async def create_boleto(boleto_data: BoletoCreate, current_user: UserBase = Depends(get_current_user)):
+    """Cria um novo boleto"""
+    boleto_dict = boleto_data.dict()
+    boleto_dict["unidade_id"] = current_user.unidade_id
+    boleto_obj = Boleto(**boleto_dict)
+    await db.boletos.insert_one(boleto_obj.dict())
+    return boleto_obj
+
+@api_router.put("/boletos/{boleto_id}/pagar")
+async def pagar_boleto(boleto_id: str, pagamento: PagamentoBoleto, current_user: UserBase = Depends(get_current_user)):
+    """Marca um boleto como pago"""
+    result = await db.boletos.update_one(
+        {"id": boleto_id, "unidade_id": current_user.unidade_id},
+        {"$set": {
+            "status": "pago",
+            "data_pagamento": pagamento.data_pagamento
+        }}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Boleto não encontrado")
+    
+    return {"message": "Boleto marcado como pago"}
+
+# Fechamento de Caixa routes
+@api_router.get("/caixa/fechamento/{data}")
+async def get_fechamento_caixa(data: str, current_user: UserBase = Depends(get_current_user)):
+    """Retorna o fechamento de caixa para uma data específica"""
+    try:
+        start_date = datetime.fromisoformat(data + 'T00:00:00')
+        end_date = datetime.fromisoformat(data + 'T23:59:59')
+        
+        # Buscar vendas do dia
+        vendas = await db.vendas.find({
+            "unidade_id": current_user.unidade_id,
+            "created_at": {
+                "$gte": start_date,
+                "$lte": end_date
+            }
+        }).to_list(1000)
+        
+        # Buscar pagamentos de boletos do dia
+        boletos_pagos = await db.boletos.find({
+            "unidade_id": current_user.unidade_id,
+            "data_pagamento": data,
+            "status": "pago"
+        }).to_list(1000)
+        
+        # Agrupar recebimentos por método
+        recebimentos = {
+            "dinheiro": 0.0,
+            "pix": 0.0,
+            "debito": 0.0,
+            "credito": 0.0,
+            "fiado": 0.0
+        }
+        
+        for venda in vendas:
+            metodo = venda["metodo_pagamento"]
+            if metodo in recebimentos:
+                recebimentos[metodo] += float(venda["total"])
+        
+        # Agrupar pagamentos por fornecedor
+        pagamentos = {}
+        for boleto in boletos_pagos:
+            fornecedor = boleto["fornecedor"]
+            if fornecedor not in pagamentos:
+                pagamentos[fornecedor] = 0.0
+            pagamentos[fornecedor] += float(boleto["valor"])
+        
+        total_recebimentos = sum(recebimentos.values())
+        total_pagamentos = sum(pagamentos.values())
+        saldo_dia = total_recebimentos - total_pagamentos
+        
+        return {
+            "data": data,
+            "recebimentos": recebimentos,
+            "pagamentos": pagamentos,
+            "total_recebimentos": total_recebimentos,
+            "total_pagamentos": total_pagamentos,
+            "saldo_dia": saldo_dia,
+            "total_vendas": len(vendas),
+            "total_boletos_pagos": len(boletos_pagos)
+        }
+        
+    except Exception as e:
+        return {
+            "data": data,
+            "recebimentos": {"dinheiro": 0, "pix": 0, "debito": 0, "credito": 0, "fiado": 0},
+            "pagamentos": {},
+            "total_recebimentos": 0,
+            "total_pagamentos": 0,
+            "saldo_dia": 0,
+            "total_vendas": 0,
+            "total_boletos_pagos": 0
+        }
+
 # Dashboard routes
 @api_router.get("/dashboard/vendas-periodo")
 async def get_vendas_periodo(
@@ -672,12 +784,41 @@ async def get_dashboard_stats(current_user: UserBase = Depends(get_current_user)
         "status": {"$ne": "pago"}
     })
     
+    # Boletos por status
+    boletos = await db.boletos.find({"unidade_id": current_user.unidade_id}).to_list(1000)
+    hoje = datetime.now().date()
+    
+    boletos_vencidos = []
+    boletos_a_pagar = []
+    
+    for boleto in boletos:
+        vencimento = datetime.fromisoformat(boleto["data_vencimento"]).date()
+        if boleto.get("status") != "pago":
+            if vencimento < hoje:
+                boletos_vencidos.append({
+                    "id": boleto.get("id"),
+                    "fornecedor": boleto["fornecedor"],
+                    "valor": boleto["valor"],
+                    "data_vencimento": boleto["data_vencimento"]
+                })
+            else:
+                boletos_a_pagar.append({
+                    "id": boleto.get("id"),
+                    "fornecedor": boleto["fornecedor"],
+                    "valor": boleto["valor"],
+                    "data_vencimento": boleto["data_vencimento"]
+                })
+    
     return {
         "total_produtos": total_produtos,
         "total_clientes": total_clientes,
         "produtos_estoque_baixo": len(produtos_estoque_baixo),
         "produtos_estoque_baixo_detalhes": produtos_estoque_baixo,
-        "fiados_pendentes": fiados_pendentes
+        "fiados_pendentes": fiados_pendentes,
+        "boletos_vencidos": len(boletos_vencidos),
+        "boletos_vencidos_detalhes": boletos_vencidos,
+        "boletos_a_pagar": len(boletos_a_pagar),
+        "boletos_a_pagar_valor": sum(b["valor"] for b in boletos_a_pagar)
     }
 
 # User management routes (Admin only)
@@ -735,649 +876,7 @@ async def alterar_senha_usuario(user_id: str, senha_data: dict, current_user: Us
     
     return {"message": "Senha alterada com sucesso"}
 
-# Notas Fiscais routes
-@api_router.post("/notas-fiscais/extrair")
-async def extrair_dados_nota_fiscal(arquivo: bytes = File(...), current_user: UserBase = Depends(get_current_user)):
-    """Extrai dados de uma nota fiscal (PDF, XML ou imagem) usando OCR e parsing XML"""
-    try:
-        # Detectar tipo de arquivo pelo conteúdo
-        arquivo_bytes = await arquivo.read()
-        
-        # Se for XML, fazer parsing direto
-        if arquivo_bytes.startswith(b'<?xml') or b'<nfeProc' in arquivo_bytes or b'<NFe' in arquivo_bytes:
-            return extrair_dados_xml_nfe(arquivo_bytes)
-        
-        # Se for PDF ou imagem, usar simulação de OCR (em produção, usar serviço real)
-        return extrair_dados_ocr_simulado(arquivo_bytes)
-        
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Erro ao processar arquivo: {str(e)}")
-
-def extrair_dados_xml_nfe(xml_bytes):
-    """Extrai dados de XML de NFe (simulação - em produção usar parser XML real)"""
-    import xml.etree.ElementTree as ET
-    
-    try:
-        # Simulação de parsing de XML de NFe
-        dados_extraidos = {
-            "numero": f"NF{datetime.now().strftime('%Y%m%d%H%M')}",
-            "serie": "001",
-            "chave_acesso": f"35{datetime.now().strftime('%y%m%d')}" + "0" * 30,  # Simulação
-            "fornecedor": "Distribuidora Farmacêutica Prime LTDA",
-            "cnpj_fornecedor": "12.345.678/0001-90",
-            "data_emissao": datetime.now().strftime('%Y-%m-%d'),
-            "data_vencimento": (datetime.now() + timedelta(days=30)).strftime('%Y-%m-%d'),
-            "valor_total": 2847.50,
-            "valor_icms": 256.28,
-            "valor_ipi": 0.00,
-            "valor_pis": 18.51,
-            "valor_cofins": 85.42,
-            "produtos": [
-                {
-                    "nome": "PARACETAMOL 750MG C/20 COMP MEDLEY",
-                    "codigo": "7896422519991",
-                    "codigo_fornecedor": "MED-PAR750-20",
-                    "ncm": "30049099",
-                    "cfop": "5102",
-                    "unidade": "CX",
-                    "quantidade": 24,
-                    "preco_unitario": 18.45,
-                    "preco_custo": 18.45,
-                    "preco_venda": 23.99,  # Margem de 30%
-                    "valor_total": 442.80,
-                    "icms_aliquota": 7.00,
-                    "ipi_aliquota": 0.00,
-                },
-                {
-                    "nome": "DIPIRONA SODICA 500MG C/10 COMP MEDLEY",
-                    "codigo": "7896422519984",
-                    "codigo_fornecedor": "MED-DIP500-10", 
-                    "ncm": "30049099",
-                    "cfop": "5102",
-                    "unidade": "CX",
-                    "quantidade": 36,
-                    "preco_unitario": 14.20,
-                    "preco_custo": 14.20,
-                    "preco_venda": 18.46,  # Margem de 30%
-                    "valor_total": 511.20,
-                    "icms_aliquota": 7.00,
-                    "ipi_aliquota": 0.00,
-                },
-                {
-                    "nome": "OMEPRAZOL 20MG C/28 CAPS MEDLEY",
-                    "codigo": "7896422519977",
-                    "codigo_fornecedor": "MED-OME20-28",
-                    "ncm": "30049099", 
-                    "cfop": "5102",
-                    "unidade": "CX",
-                    "quantidade": 18,
-                    "preco_unitario": 32.85,
-                    "preco_custo": 32.85,
-                    "preco_venda": 42.71,  # Margem de 30%
-                    "valor_total": 591.30,
-                    "icms_aliquota": 7.00,
-                    "ipi_aliquota": 0.00,
-                },
-                {
-                    "nome": "AMOXICILINA 500MG C/21 CAPS MEDLEY",
-                    "codigo": "7896422519960",
-                    "codigo_fornecedor": "MED-AMO500-21",
-                    "ncm": "30049099",
-                    "cfop": "5102", 
-                    "unidade": "CX",
-                    "quantidade": 30,
-                    "preco_unitario": 28.90,
-                    "preco_custo": 28.90,
-                    "preco_venda": 37.57,  # Margem de 30%
-                    "valor_total": 867.00,
-                    "icms_aliquota": 7.00,
-                    "ipi_aliquota": 0.00,
-                },
-                {
-                    "nome": "IBUPROFENO 600MG C/20 COMP MEDLEY",
-                    "codigo": "7896422519953",
-                    "codigo_fornecedor": "MED-IBU600-20",
-                    "ncm": "30049099",
-                    "cfop": "5102",
-                    "unidade": "CX", 
-                    "quantidade": 15,
-                    "preco_unitario": 29.10,
-                    "preco_custo": 29.10,
-                    "preco_venda": 37.83,  # Margem de 30%
-                    "valor_total": 436.50,
-                    "icms_aliquota": 7.00,
-                    "ipi_aliquota": 0.00,
-                }
-            ],
-            "observacoes": "Nota fiscal de compra para revenda. Todos os produtos possuem registro na ANVISA.",
-            "condicoes_pagamento": "30 dias",
-            "transportadora": "Transportes Rápidos LTDA",
-            "peso_bruto": 12.5,
-            "peso_liquido": 11.8,
-            "quantidade_volumes": 3
-        }
-        
-        return dados_extraidos
-        
-    except Exception as e:
-        # Se não conseguir fazer parsing, usar simulação básica
-        return extrair_dados_ocr_simulado(xml_bytes)
-
-def extrair_dados_ocr_simulado(arquivo_bytes):
-    """Simula OCR para PDF/imagem (em produção integrar com Google Vision API, AWS Textract, etc.)"""
-    
-    # Simulação de dados extraídos por OCR
-    dados_extraidos = {
-        "numero": f"NF{datetime.now().strftime('%Y%m%d%H%M')}OCR",
-        "serie": "001",
-        "chave_acesso": f"35{datetime.now().strftime('%y%m%d')}" + "0" * 30,
-        "fornecedor": "Farmácia Distribuidora São Paulo LTDA",
-        "cnpj_fornecedor": "98.765.432/0001-10",
-        "data_emissao": datetime.now().strftime('%Y-%m-%d'),
-        "data_vencimento": (datetime.now() + timedelta(days=30)).strftime('%Y-%m-%d'),
-        "valor_total": 1875.40,
-        "valor_icms": 168.79,
-        "valor_ipi": 0.00,
-        "valor_pis": 12.19,
-        "valor_cofins": 56.26,
-        "produtos": [
-            {
-                "nome": "LOSARTANA POTASSICA 50MG C/30 COMP",
-                "codigo": "7891234567890",
-                "codigo_fornecedor": "LOS-50-30",
-                "ncm": "30049099",
-                "cfop": "5102",
-                "unidade": "CX",
-                "quantidade": 20,
-                "preco_unitario": 22.80,
-                "preco_custo": 22.80,
-                "preco_venda": 29.64,  # Margem de 30%
-                "valor_total": 456.00,
-                "icms_aliquota": 7.00,
-                "ipi_aliquota": 0.00,
-            },
-            {
-                "nome": "ATENOLOL 25MG C/30 COMP",
-                "codigo": "7891234567883",
-                "codigo_fornecedor": "ATE-25-30",
-                "ncm": "30049099", 
-                "cfop": "5102",
-                "unidade": "CX",
-                "quantidade": 25,
-                "preco_unitario": 19.50,
-                "preco_custo": 19.50,
-                "preco_venda": 25.35,  # Margem de 30%
-                "valor_total": 487.50,
-                "icms_aliquota": 7.00,
-                "ipi_aliquota": 0.00,
-            },
-            {
-                "nome": "SINVASTATINA 20MG C/30 COMP",
-                "codigo": "7891234567876",
-                "codigo_fornecedor": "SIN-20-30",
-                "ncm": "30049099",
-                "cfop": "5102",
-                "unidade": "CX",
-                "quantidade": 18,
-                "preco_unitario": 35.40,
-                "preco_custo": 35.40,
-                "preco_venda": 46.02,  # Margem de 30%
-                "valor_total": 637.20,
-                "icms_aliquota": 7.00,
-                "ipi_aliquota": 0.00,
-            },
-            {
-                "nome": "METFORMINA 850MG C/60 COMP",
-                "codigo": "7891234567869",
-                "codigo_fornecedor": "MET-850-60",
-                "ncm": "30049099",
-                "cfop": "5102",
-                "unidade": "CX", 
-                "quantidade": 12,
-                "preco_unitario": 24.70,
-                "preco_custo": 24.70,
-                "preco_venda": 32.11,  # Margem de 30%
-                "valor_total": 296.40,
-                "icms_aliquota": 7.00,
-                "ipi_aliquota": 0.00,
-            }
-        ],
-        "observacoes": "Mercadorias sujeitas à vigilância sanitária. Nota extraída via OCR.",
-        "condicoes_pagamento": "30 dias",
-        "transportadora": "Logística Express LTDA",
-        "peso_bruto": 8.2,
-        "peso_liquido": 7.8,
-        "quantidade_volumes": 2
-    }
-    
-    return dados_extraidos
-
-@api_router.post("/notas-fiscais", response_model=NotaFiscal)
-async def create_nota_fiscal(nota_data: NotaFiscalCreate, current_user: UserBase = Depends(get_current_user)):
-    """Salva uma nota fiscal processada e cadastra produtos"""
-    try:
-        # Calcular lucro potencial
-        lucro_potencial = sum(
-            (produto["preco_venda"] - produto["preco_custo"]) * produto["quantidade"]
-            for produto in nota_data.produtos
-        )
-        
-        # Criar nota fiscal
-        nota_dict = nota_data.dict()
-        nota_dict.update({
-            "unidade_id": current_user.unidade_id,
-            "total_produtos": len(nota_data.produtos),
-            "lucro_potencial": lucro_potencial,
-            "produtos_extraidos": nota_data.produtos
-        })
-        
-        nota_obj = NotaFiscal(**nota_dict)
-        await db.notas_fiscais.insert_one(nota_obj.dict())
-        
-        # Cadastrar/atualizar produtos automaticamente
-        for produto_data in nota_data.produtos:
-            # Verificar se produto já existe
-            produto_existente = await db.produtos.find_one({
-                "codigo_barras": produto_data["codigo"],
-                "unidade_id": current_user.unidade_id
-            })
-            
-            if produto_existente:
-                # Atualizar quantidade e preços
-                await db.produtos.update_one(
-                    {"id": produto_existente["id"]},
-                    {
-                        "$inc": {"quantidade": produto_data["quantidade"]},
-                        "$set": {
-                            "preco": produto_data["preco_venda"],
-                            "preco_custo": produto_data["preco_custo"]
-                        }
-                    }
-                )
-            else:
-                # Criar novo produto
-                novo_produto = {
-                    "id": str(uuid.uuid4()),
-                    "nome": produto_data["nome"],
-                    "codigo_barras": produto_data["codigo"],
-                    "validade": "2025-12-31",  # Valor padrão, deve ser ajustado
-                    "preco": produto_data["preco_venda"],
-                    "preco_custo": produto_data["preco_custo"],
-                    "quantidade": produto_data["quantidade"],
-                    "estoque_minimo": 10,
-                    "localizacao": "A-ENTRADA",  # Localização padrão para produtos da nota
-                    "unidade_id": current_user.unidade_id,
-                    "created_at": datetime.now(timezone.utc)
-                }
-                await db.produtos.insert_one(novo_produto)
-        
-        # Criar conta a pagar
-        conta_pagar = {
-            "id": str(uuid.uuid4()),
-            "nota_fiscal_id": nota_obj.id,
-            "fornecedor": nota_data.fornecedor,
-            "valor": nota_data.valor_total,
-            "data_vencimento": (datetime.now() + timedelta(days=30)).strftime('%Y-%m-%d'),
-            "status": "pendente",
-            "unidade_id": current_user.unidade_id,
-            "created_at": datetime.now(timezone.utc)
-        }
-        await db.contas_pagar.insert_one(conta_pagar)
-        
-        return nota_obj
-        
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Erro ao salvar nota fiscal: {str(e)}")
-
-@api_router.get("/notas-fiscais", response_model=List[NotaFiscal])
-async def get_notas_fiscais(current_user: UserBase = Depends(get_current_user)):
-    """Lista todas as notas fiscais da unidade"""
-    notas = await db.notas_fiscais.find({"unidade_id": current_user.unidade_id}).to_list(1000)
-    result = []
-    for nota in notas:
-        nota_clean = {
-            "id": nota.get("id", str(nota.get("_id", ""))),
-            "numero": nota["numero"],
-            "fornecedor": nota["fornecedor"],
-            "data_emissao": nota["data_emissao"],
-            "valor_total": float(nota["valor_total"]),
-            "total_produtos": int(nota["total_produtos"]),
-            "lucro_potencial": float(nota.get("lucro_potencial", 0)),
-            "status": nota.get("status", "processada"),
-            "arquivo_nome": nota["arquivo_nome"],
-            "produtos_extraidos": nota.get("produtos_extraidos", []),
-            "created_at": nota.get("created_at", "")
-        }
-        result.append(nota_clean)
-    return result
-
-@api_router.get("/produtos/{produto_id}/lucro")
-async def get_lucro_produto(produto_id: str, current_user: UserBase = Depends(get_current_user)):
-    """Calcula o lucro de um produto específico"""
-    produto = await db.produtos.find_one({
-        "id": produto_id,
-        "unidade_id": current_user.unidade_id
-    })
-    
-    if not produto:
-        raise HTTPException(status_code=404, detail="Produto não encontrado")
-    
-    preco_custo = produto.get("preco_custo", 0)
-    preco_venda = produto.get("preco", 0)
-    margem_lucro = ((preco_venda - preco_custo) / preco_custo * 100) if preco_custo > 0 else 0
-    
-    return {
-        "produto_id": produto_id,
-        "nome": produto["nome"],
-        "preco_custo": preco_custo,
-        "preco_venda": preco_venda,
-        "lucro_unitario": preco_venda - preco_custo,
-        "margem_lucro": margem_lucro
-    }
-
-@api_router.get("/contas-pagar")
-async def get_contas_pagar(current_user: UserBase = Depends(get_current_user)):
-    """Lista contas a pagar da unidade"""
-    contas = await db.contas_pagar.find({"unidade_id": current_user.unidade_id}).to_list(1000)
-    result = []
-    for conta in contas:
-        conta_clean = {
-            "id": conta.get("id", str(conta.get("_id", ""))),
-            "nota_fiscal_id": conta["nota_fiscal_id"],
-            "fornecedor": conta["fornecedor"],
-            "valor": float(conta["valor"]),
-            "data_vencimento": conta["data_vencimento"],
-            "status": conta["status"],
-            "data_pagamento": conta.get("data_pagamento"),
-            "created_at": conta.get("created_at", "")
-        }
-        result.append(conta_clean)
-    return result
-
-@api_router.post("/notas-fiscais/validar-chave/{chave_acesso}")
-async def validar_chave_nfe(chave_acesso: str, current_user: UserBase = Depends(get_current_user)):
-    """Valida chave de acesso da NFe junto à SEFAZ (simulação)"""
-    try:
-        # Validação básica do formato da chave (44 dígitos)
-        if len(chave_acesso) != 44 or not chave_acesso.isdigit():
-            raise HTTPException(status_code=400, detail="Chave de acesso deve ter 44 dígitos numéricos")
-        
-        # Simulação de consulta à SEFAZ
-        # Em produção, integrar com webservice real da SEFAZ
-        validacao_result = {
-            "chave_acesso": chave_acesso,
-            "situacao": "autorizada",  # autorizada, cancelada, rejeitada
-            "data_autorizacao": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-            "protocolo_autorizacao": f"135{datetime.now().strftime('%y%m%d%H%M%S')}",
-            "digest_value": "abc123def456...",  # Hash de validação
-            "valida": True,
-            "motivo": "NFe autorizada com sucesso",
-            "uf_emissao": chave_acesso[0:2],
-            "cnpj_emitente": f"{chave_acesso[6:20]}",
-            "modelo": "55",  # 55 = NFe, 65 = NFCe
-            "serie": chave_acesso[22:25],
-            "numero": chave_acesso[25:34]
-        }
-        
-        return validacao_result
-        
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Erro na validação: {str(e)}")
-
-@api_router.get("/notas-fiscais/{nota_id}/xml")
-async def download_xml_nfe(nota_id: str, current_user: UserBase = Depends(get_current_user)):
-    """Baixa o XML da NFe"""
-    try:
-        nota = await db.notas_fiscais.find_one({
-            "id": nota_id,
-            "unidade_id": current_user.unidade_id
-        })
-        
-        if not nota:
-            raise HTTPException(status_code=404, detail="Nota fiscal não encontrada")
-        
-        # Gerar XML simulado (em produção, retornar XML real armazenado)
-        xml_content = gerar_xml_nfe_simulado(nota)
-        
-        return {"xml_content": xml_content, "filename": f"NFe_{nota['numero']}.xml"}
-        
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Erro ao gerar XML: {str(e)}")
-
-def gerar_xml_nfe_simulado(nota):
-    """Gera XML de NFe simulado para demonstração"""
-    xml_template = f"""<?xml version="1.0" encoding="UTF-8"?>
-<nfeProc versao="4.00" xmlns="http://www.portalfiscal.inf.br/nfe">
-    <NFe xmlns="http://www.portalfiscal.inf.br/nfe">
-        <infNFe versao="4.00" Id="NFe{nota.get('chave_acesso', '35' + '0' * 42)}">
-            <ide>
-                <cUF>35</cUF>
-                <cNF>12345678</cNF>
-                <natOp>Venda de produtos farmacêuticos</natOp>
-                <mod>55</mod>
-                <serie>{nota.get('serie', '001')}</serie>
-                <nNF>{nota['numero']}</nNF>
-                <dhEmi>{nota['data_emissao']}T10:00:00-03:00</dhEmi>
-                <tpNF>1</tpNF>
-                <idDest>1</idDest>
-                <cMunFG>3550308</cMunFG>
-                <tpImp>1</tpImp>
-                <tpEmis>1</tpEmis>
-                <cDV>5</cDV>
-                <tpAmb>2</tpAmb>
-                <finNFe>1</finNFe>
-                <indFinal>1</indFinal>
-                <indPres>1</indPres>
-            </ide>
-            <emit>
-                <CNPJ>{nota.get('cnpj_fornecedor', '12345678000190')}</CNPJ>
-                <xNome>{nota['fornecedor']}</xNome>
-                <enderEmit>
-                    <xLgr>Rua das Indústrias</xLgr>
-                    <nro>123</nro>
-                    <xBairro>Industrial</xBairro>
-                    <cMun>3550308</cMun>
-                    <xMun>São Paulo</xMun>
-                    <UF>SP</UF>
-                    <CEP>01234567</CEP>
-                </enderEmit>
-                <IE>123456789123</IE>
-                <CRT>3</CRT>
-            </emit>
-            <dest>
-                <CNPJ>98765432000101</CNPJ>
-                <xNome>Farmácia São Gonçalo</xNome>
-                <enderDest>
-                    <xLgr>Rua Principal</xLgr>
-                    <nro>456</nro>
-                    <xBairro>Centro</xBairr>
-                    <cMun>3550308</cMun>
-                    <xMun>São Paulo</xMun>
-                    <UF>SP</UF>
-                    <CEP>01234000</CEP>
-                </enderDest>
-                <indIEDest>1</indIEDest>
-                <IE>987654321987</IE>
-            </dest>
-            <det nItem="1">
-                <prod>
-                    <cProd>001</cProd>
-                    <cEAN>7896422519991</cEAN>
-                    <xProd>Paracetamol 750mg C/20 Comp</xProd>
-                    <NCM>30049099</NCM>
-                    <CFOP>5102</CFOP>
-                    <uCom>CX</uCom>
-                    <qCom>10.0000</qCom>
-                    <vUnCom>18.4500</vUnCom>
-                    <vProd>184.50</vProd>
-                    <cEANTrib>7896422519991</cEANTrib>
-                    <uTrib>CX</uTrib>
-                    <qTrib>10.0000</qTrib>
-                    <vUnTrib>18.4500</vUnTrib>
-                    <indTot>1</indTot>
-                </prod>
-                <imposto>
-                    <ICMS>
-                        <ICMS00>
-                            <orig>0</orig>
-                            <CST>00</CST>
-                            <modBC>3</modBC>
-                            <vBC>184.50</vBC>
-                            <pICMS>7.00</pICMS>
-                            <vICMS>12.92</vICMS>
-                        </ICMS00>
-                    </ICMS>
-                </imposto>
-            </det>
-            <total>
-                <ICMSTot>
-                    <vBC>{nota['valor_total']}</vBC>
-                    <vICMS>{nota.get('valor_icms', 0)}</vICMS>
-                    <vICMSDeson>0.00</vICMSDeson>
-                    <vBCST>0.00</vBCST>
-                    <vST>0.00</vST>
-                    <vProd>{nota['valor_total']}</vProd>
-                    <vFrete>0.00</vFrete>
-                    <vSeg>0.00</vSeg>
-                    <vDesc>0.00</vDesc>
-                    <vII>0.00</vII>
-                    <vIPI>{nota.get('valor_ipi', 0)}</vIPI>
-                    <vPIS>{nota.get('valor_pis', 0)}</vPIS>
-                    <vCOFINS>{nota.get('valor_cofins', 0)}</vCOFINS>
-                    <vOutro>0.00</vOutro>
-                    <vNF>{nota['valor_total']}</vNF>
-                </ICMSTot>
-            </total>
-            <transp>
-                <modFrete>0</modFrete>
-                <transporta>
-                    <xNome>{nota.get('transportadora', 'Transportes Rápidos LTDA')}</xNome>
-                </transporta>
-                <vol>
-                    <qVol>{nota.get('quantidade_volumes', 1)}</qVol>
-                    <esp>Caixa</esp>
-                    <pesoL>{nota.get('peso_liquido', 0)}</pesoL>
-                    <pesoB>{nota.get('peso_bruto', 0)}</pesoB>
-                </vol>
-            </transp>
-            <pag>
-                <detPag>
-                    <tPag>15</tPag>
-                    <vPag>{nota['valor_total']}</vPag>
-                </detPag>
-            </pag>
-            <infAdic>
-                <infCpl>{nota.get('observacoes', 'Nota fiscal de compra para revenda.')}</infCpl>
-            </infAdic>
-        </infNFe>
-    </NFe>
-    <protNFe versao="4.00">
-        <infProt>
-            <tpAmb>2</tpAmb>
-            <verAplic>SP_NFE_PL009_V4</verAplic>
-            <chNFe>{nota.get('chave_acesso', '35' + '0' * 42)}</chNFe>
-            <dhRecbto>{nota['data_emissao']}T10:05:00-03:00</dhRecbto>
-            <nProt>135{datetime.now().strftime('%y%m%d%H%M%S')}</nProt>
-            <digVal>abc123def456ghi789...</digVal>
-            <cStat>100</cStat>
-            <xMotivo>Autorizado o uso da NF-e</xMotivo>
-        </infProt>
-    </protNFe>
-</nfeProc>"""
-    
-    return xml_template
-
-# Boletos routes
-@api_router.get("/boletos")
-async def get_boletos(current_user: UserBase = Depends(get_current_user)):
-    """Lista todos os boletos da unidade"""
-    boletos = await db.boletos.find({"unidade_id": current_user.unidade_id}).to_list(1000)
-    result = []
-    for boleto in boletos:
-        # Determinar status baseado na data
-        hoje = datetime.now().date()
-        vencimento = datetime.fromisoformat(boleto["data_vencimento"]).date()
-        status = boleto.get("status", "pendente")
-        
-        if status == "pendente" and vencimento < hoje:
-            status = "vencido"
-            # Atualizar no banco
-            await db.boletos.update_one(
-                {"id": boleto["id"]},
-                {"$set": {"status": "vencido"}}
-            )
-        
-        boleto_clean = {
-            "id": boleto.get("id", str(boleto.get("_id", ""))),
-            "fornecedor": boleto["fornecedor"],
-            "valor": float(boleto["valor"]),
-            "data_vencimento": boleto["data_vencimento"],
-            "descricao": boleto.get("descricao", ""),
-            "categoria": boleto.get("categoria", "medicamentos"),
-            "numero_boleto": boleto.get("numero_boleto", ""),
-            "status": status,
-            "data_pagamento": boleto.get("data_pagamento"),
-            "created_at": boleto.get("created_at", "")
-        }
-        result.append(boleto_clean)
-    
-    return result
-
-@api_router.post("/boletos", response_model=Boleto)
-async def create_boleto(boleto_data: BoletoCreate, current_user: UserBase = Depends(get_current_user)):
-    """Cria um novo boleto"""
-    boleto_dict = boleto_data.dict()
-    boleto_dict["unidade_id"] = current_user.unidade_id
-    boleto_obj = Boleto(**boleto_dict)
-    await db.boletos.insert_one(boleto_obj.dict())
-    return boleto_obj
-
-@api_router.put("/boletos/{boleto_id}/pagar")
-async def pagar_boleto(boleto_id: str, pagamento: PagamentoBoleto, current_user: UserBase = Depends(get_current_user)):
-    """Marca um boleto como pago"""
-    result = await db.boletos.update_one(
-        {"id": boleto_id, "unidade_id": current_user.unidade_id},
-        {"$set": {
-            "status": "pago",
-            "data_pagamento": pagamento.data_pagamento
-        }}
-    )
-    
-    if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Boleto não encontrado")
-    
-    return {"message": "Boleto marcado como pago"}
-
-@api_router.get("/boletos/dashboard")
-async def get_boletos_dashboard(current_user: UserBase = Depends(get_current_user)):
-    """Retorna estatísticas de boletos para o dashboard"""
-    boletos = await db.boletos.find({"unidade_id": current_user.unidade_id}).to_list(1000)
-    
-    hoje = datetime.now().date()
-    vencidos = []
-    aPagar = []
-    pagos = []
-    
-    for boleto in boletos:
-        vencimento = datetime.fromisoformat(boleto["data_vencimento"]).date()
-        status = boleto.get("status", "pendente")
-        
-        if status == "pago":
-            pagos.append(boleto)
-        elif vencimento < hoje:
-            vencidos.append(boleto)
-        else:
-            aPagar.append(boleto)
-    
-    return {
-        "vencidos": len(vencidos),
-        "vencidos_valor": sum(b["valor"] for b in vencidos),
-        "vencidos_detalhes": vencidos[:5],  # Top 5 para dashboard
-        "a_pagar": len(aPagar),
-        "a_pagar_valor": sum(b["valor"] for b in aPagar),
-        "pagos": len(pagos),
-        "pagos_valor": sum(b["valor"] for b in pagos)
-    }
+# Include the router in the main app
 app.include_router(api_router)
 
 app.add_middleware(

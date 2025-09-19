@@ -13,6 +13,8 @@ import Promocoes from "./components/Promocoes";
 import Relatorios from "./components/Relatorios";
 import Usuarios from "./components/Usuarios";
 import NotasFiscais from "./components/NotasFiscais";
+import Boletos from "./components/Boletos";
+import FechamentoCaixa from "./components/FechamentoCaixa";
 import Sidebar from "./components/Sidebar";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -95,6 +97,8 @@ function App() {
                 <Route path="/clientes" element={<Clientes user={user} />} />
                 <Route path="/promocoes" element={<Promocoes user={user} />} />
                 <Route path="/relatorios" element={<Relatorios user={user} />} />
+                <Route path="/boletos" element={<Boletos user={user} />} />
+                <Route path="/fechamento" element={<FechamentoCaixa user={user} />} />
                 <Route path="/notas-fiscais" element={<NotasFiscais user={user} />} />
                 {user.role === 'admin' && (
                   <>
