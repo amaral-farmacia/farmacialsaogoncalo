@@ -1901,6 +1901,13 @@ def main():
     # Test current user info
     tester.test_get_me()
     
+    # SPECIAL TEST: Comprehensive Angical User System Testing
+    print("\n📋 FASE ESPECIAL: SISTEMA DE USUÁRIO ANGICAL")
+    angical_system_success = tester.test_comprehensive_angical_user_system()
+    if not angical_system_success:
+        print("❌ Angical user system testing failed")
+        # Continue with other tests but note the failure
+    
     # Test 2: Products
     print("\n📋 FASE 2: GESTÃO DE PRODUTOS")
     produtos_success, produtos = tester.test_get_produtos()
