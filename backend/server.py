@@ -187,6 +187,45 @@ class EntradaMercadoriaCreate(BaseModel):
     fornecedor: str = ""
     localizacao: str = ""
 
+class NotaFiscal(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    numero: str
+    serie: str
+    fornecedor_nome: str
+    fornecedor_cnpj: str
+    data_emissao: str
+    data_recebimento: str = ""
+    valor_total: float
+    valor_produtos: float
+    valor_servicos: float = 0.0
+    valor_desconto: float = 0.0
+    valor_frete: float = 0.0
+    icms_total: float = 0.0
+    ipi_total: float = 0.0
+    status: str = "recebida"  # recebida, processada, erro
+    arquivo_xml: str = ""  # path do arquivo
+    produtos: list = []
+    observacoes: str = ""
+    usuario_id: str
+    unidade_id: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class NotaFiscalCreate(BaseModel):
+    numero: str
+    serie: str
+    fornecedor_nome: str
+    fornecedor_cnpj: str
+    data_emissao: str
+    valor_total: float
+    valor_produtos: float
+    valor_servicos: float = 0.0
+    valor_desconto: float = 0.0
+    valor_frete: float = 0.0
+    icms_total: float = 0.0
+    ipi_total: float = 0.0
+    produtos: list = []
+    observacoes: str = ""
+
 # Utility functions
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
