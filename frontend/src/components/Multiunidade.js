@@ -356,16 +356,16 @@ const Multiunidade = ({ user }) => {
                 
                 {/* Estatísticas Rápidas */}
                 <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-4 rounded-lg">
-                  <div className="grid grid-cols-2 gap-4 text-center text-sm">
-                    <div>
-                      <p className="font-semibold text-gray-800">{unidade.estatisticas?.produtos || 0}</p>
-                      <p className="text-gray-600">Produtos</p>
-                    </div>
-                    <div>
-                      <p className="font-semibold text-gray-800">{unidade.estatisticas?.clientes || 0}</p>
-                      <p className="text-gray-600">Clientes</p>
-                    </div>
+                  <div className="grid grid-cols-2 gap-3 pt-3 border-t">
+                  <div className="text-center">
+                    <p className="text-xl font-bold text-blue-600">{unidade.total_produtos || 0}</p>
+                    <p className="text-xs text-gray-600">Produtos</p>
                   </div>
+                  <div className="text-center">
+                    <p className="text-xl font-bold text-green-600">{formatCurrency(unidade.vendas_mes || 0)}</p>
+                    <p className="text-xs text-gray-600">Vendas/Mês</p>
+                  </div>
+                </div>
                 </div>
                 
                 {/* Ações */}
