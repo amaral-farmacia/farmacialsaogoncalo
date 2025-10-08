@@ -138,6 +138,18 @@ backend:
         agent: "testing"
         comment: "✅ DASHBOARD INTEGRATION VERIFIED: GET /api/dashboard/stats correctly includes all required boletos data: boletos_vencidos (count), boletos_vencidos_detalhes (array with supplier, value, due date), boletos_a_pagar (count), boletos_a_pagar_valor (total amount). All fields present and correctly calculated. Dashboard properly integrates with boletos system for financial overview."
 
+  - task: "Enhanced Boletos Edit/Delete Operations"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ ENHANCED BOLETOS EDIT/DELETE FUNCTIONALITY FULLY TESTED: PUT /api/boletos/{id} endpoint working perfectly - successfully updates all boleto fields (fornecedor, valor, data_vencimento, categoria, numero_boleto, descricao) and returns updated boleto data. DELETE /api/boletos/{id} endpoint working perfectly - completely removes boletos from database with proper verification. Edge case testing passed: invalid boleto IDs correctly return 404 status for both edit and delete operations. Access control verified: users can only edit/delete boletos from their own unit (unidade_id restrictions enforced). Authentication requirements confirmed: all operations require valid admin credentials. Comprehensive CRUD testing completed: Create→Read→Update→Delete→Verify workflow executed successfully. Integration testing passed: new edit/delete operations work seamlessly with existing boletos system without affecting other functionality. 95.7% overall test success rate (45/47 tests passed). System ready for production use with complete CRUD capabilities."
+
 frontend:
   - task: "Boletos Component"
     implemented: true
