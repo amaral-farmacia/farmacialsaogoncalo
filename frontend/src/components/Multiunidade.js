@@ -254,61 +254,56 @@ const Multiunidade = ({ user }) => {
         </Dialog>
       </div>
 
-      {/* Dashboard Consolidado */}
-      <Card className="shadow-lg border-0">
-        <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50 border-b">
-          <CardTitle className="flex items-center gap-2 text-indigo-800">
-            <BarChart3 className="h-5 w-5" />
-            Visão Consolidada - Todas as Unidades
-          </CardTitle>
-          <CardDescription className="text-indigo-700">
-            Resumo geral do desempenho de todas as unidades
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white p-6 rounded-lg">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-emerald-100 text-sm font-medium">Vendas Totais</p>
-                  <p className="text-2xl font-bold">{formatCurrency(consolidado.total_vendas)}</p>
-                </div>
-                <DollarSign className="h-8 w-8 text-emerald-200" />
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0 shadow-lg">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-blue-100 text-sm font-medium">Total Unidades</p>
+                <p className="text-2xl font-bold">{unidades.length}</p>
               </div>
+              <Building2 className="h-8 w-8 text-blue-200" />
             </div>
-            
-            <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 rounded-lg">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-blue-100 text-sm font-medium">Total Produtos</p>
-                  <p className="text-2xl font-bold">{consolidado.total_produtos}</p>
-                </div>
-                <Package className="h-8 w-8 text-blue-200" />
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white border-0 shadow-lg">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-green-100 text-sm font-medium">Vendas Consolidadas</p>
+                <p className="text-2xl font-bold">{formatCurrency(consolidado.vendas_total || 0)}</p>
               </div>
+              <TrendingUp className="h-8 w-8 text-green-200" />
             </div>
-            
-            <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-6 rounded-lg">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-purple-100 text-sm font-medium">Total Clientes</p>
-                  <p className="text-2xl font-bold">{consolidado.total_clientes}</p>
-                </div>
-                <Users className="h-8 w-8 text-purple-200" />
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0 shadow-lg">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-purple-100 text-sm font-medium">Total Produtos</p>
+                <p className="text-2xl font-bold">{consolidado.produtos_total || 0}</p>
               </div>
+              <Package className="h-8 w-8 text-purple-200" />
             </div>
-            
-            <div className="bg-gradient-to-br from-amber-500 to-amber-600 text-white p-6 rounded-lg">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-amber-100 text-sm font-medium">Unidades Ativas</p>
-                  <p className="text-2xl font-bold">{unidades.filter(u => u.status === 'ativa').length}</p>
-                </div>
-                <Building2 className="h-8 w-8 text-amber-200" />
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white border-0 shadow-lg">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-orange-100 text-sm font-medium">Total Clientes</p>
+                <p className="text-2xl font-bold">{consolidado.clientes_total || 0}</p>
               </div>
+              <Users className="h-8 w-8 text-orange-200" />
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Lista de Unidades */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
