@@ -199,6 +199,10 @@ test_plan:
     - "Fechamento de Caixa Backend"
     - "Fechamento de Caixa Frontend"
     - "Dashboard Integration with Fechamento"
+    - "Entrada de Mercadorias Backend"
+    - "Entrada de Mercadorias Frontend"
+    - "App.js Route Integration"
+    - "Sidebar Menu Integration"
   stuck_tasks: []
   test_all: true
   test_priority: "high_first"
