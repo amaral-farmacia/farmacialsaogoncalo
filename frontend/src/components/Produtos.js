@@ -233,9 +233,21 @@ const Produtos = ({ user }) => {
                 />
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="preco">Preço (R$) *</Label>
+                  <Label htmlFor="preco_custo">Valor da Compra (R$)</Label>
+                  <Input
+                    id="preco_custo"
+                    type="number"
+                    step="0.01"
+                    value={formData.preco_custo}
+                    onChange={(e) => setFormData({...formData, preco_custo: e.target.value})}
+                    placeholder="0,00"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="preco">Preço de Venda (R$) *</Label>
                   <Input
                     id="preco"
                     type="number"
@@ -259,6 +271,29 @@ const Produtos = ({ user }) => {
                   />
                 </div>
               </div>
+              
+              {/* Cálculo de lucro em tempo real */}
+              {formData.preco_custo && formData.preco && (
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-blue-700 font-medium">Lucro por unidade:</span>
+                      <div className="font-bold text-blue-900">
+                        {new Intl.NumberFormat('pt-BR', {
+                          style: 'currency',
+                          currency: 'BRL'
+                        }).format(parseFloat(formData.preco) - parseFloat(formData.preco_custo))}
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-blue-700 font-medium">Margem:</span>
+                      <div className="font-bold text-blue-900">
+                        {(((parseFloat(formData.preco) - parseFloat(formData.preco_custo)) / parseFloat(formData.preco_custo)) * 100).toFixed(1)}%
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
