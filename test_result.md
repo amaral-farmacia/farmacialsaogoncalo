@@ -196,6 +196,9 @@ test_plan:
     - "Dashboard Stats API with Boletos"  
     - "Boletos Component"
     - "Dashboard Integration with Boletos"
+    - "Fechamento de Caixa Backend"
+    - "Fechamento de Caixa Frontend"
+    - "Dashboard Integration with Fechamento"
   stuck_tasks: []
   test_all: true
   test_priority: "high_first"
