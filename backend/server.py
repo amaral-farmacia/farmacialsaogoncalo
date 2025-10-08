@@ -297,7 +297,11 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
 async def init_db():
     # Check if admin user exists
     admin_exists = await db.users.find_one({"username": "admin"})
-    if not admin_exists:
+    
+    # Verificar se usuário angical existe (para forçar reinicialização se necessário)
+    angical_exists = await db.users.find_one({"username": "angical"})
+    
+    if not admin_exists or not angical_exists:
         # Create default unidade
         unidade_id = str(uuid.uuid4())
         
