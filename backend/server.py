@@ -305,7 +305,10 @@ async def init_db():
         # Create default unidade
         unidade_id = str(uuid.uuid4())
         
-        # Create users
+        # Create segunda unidade - São Gonçalo do Angical
+        unidade_angical_id = str(uuid.uuid4())
+        
+        # Create users (including angical user)
         users = [
             {
                 "id": str(uuid.uuid4()),
@@ -350,6 +353,15 @@ async def init_db():
                 "full_name": "Colaborador 4",
                 "role": "colaborador",
                 "unidade_id": unidade_id,
+                "created_at": datetime.now(timezone.utc)
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "username": "angical",
+                "password_hash": hash_password("angical123"),
+                "full_name": "Colaborador Angical",
+                "role": "colaborador",
+                "unidade_id": unidade_angical_id,
                 "created_at": datetime.now(timezone.utc)
             }
         ]
