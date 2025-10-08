@@ -92,22 +92,26 @@ function App() {
             <Sidebar user={user} onLogout={logout} />
             <div className="flex-1 overflow-auto">
               <Routes>
-                <Route path="/" element={<Dashboard user={user} />} />
+                {user.role === 'admin' ? (
+                  <Route path="/" element={<Dashboard user={user} />} />
+                ) : (
+                  <Route path="/" element={<PDV user={user} />} />
+                )}
                 <Route path="/pdv" element={<PDV user={user} />} />
                 <Route path="/produtos" element={<Produtos user={user} />} />
                 <Route path="/clientes" element={<Clientes user={user} />} />
                 <Route path="/promocoes" element={<Promocoes user={user} />} />
-                <Route path="/relatorios" element={<Relatorios user={user} />} />
                 <Route path="/boletos" element={<Boletos user={user} />} />
                 <Route path="/fechamento" element={<FechamentoCaixa user={user} />} />
                 <Route path="/entrada-mercadorias" element={<EntradaMercadorias user={user} />} />
-                <Route path="/notas-fiscais" element={<NotasFiscais user={user} />} />
                 {user.role === 'admin' && (
                   <>
+                    <Route path="/relatorios" element={<Relatorios user={user} />} />
                     <Route path="/usuarios" element={<Usuarios user={user} />} />
+                    <Route path="/notas-fiscais" element={<NotasFiscais user={user} />} />
                   </>
                 )}
-                <Route path="*" element={<Navigate to="/" />} />
+                <Route path="*" element={<Navigate to={user.role === 'admin' ? "/" : "/pdv"} />} />
               </Routes>
             </div>
           </div>
