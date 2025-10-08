@@ -207,10 +207,6 @@ metadata:
 
 test_plan:
   current_focus:
-    - "NFe CRUD Operations"
-    - "NFe Special Operations"
-    - "NFe Data Structure Validation"
-    - "NFe Authentication and Access Control"
     - "Boletos Component"
     - "Dashboard Integration with Boletos"
     - "Fechamento de Caixa Frontend"
