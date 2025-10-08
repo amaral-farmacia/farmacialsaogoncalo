@@ -916,8 +916,45 @@ def main():
     tester.test_fechamento_caixa_future_date()
     tester.test_fechamento_caixa_invalid_date()
     
-    # Test 9: Login as colaborador
-    print("\n📋 FASE 9: TESTE COLABORADOR")
+    # Test 9: Entrada de Mercadorias System
+    print("\n📋 FASE 9: SISTEMA DE ENTRADA DE MERCADORIAS")
+    # Get current entries
+    entradas_success, entradas = tester.test_get_entradas_mercadorias()
+    
+    # Test create new entry (need to login as admin again to ensure we have proper permissions)
+    if not tester.test_login("admin", "admin123"):
+        print("❌ Admin re-login failed for entrada tests")
+    else:
+        # Get products for entry testing
+        produtos_success, produtos = tester.test_get_produtos()
+        if produtos_success and produtos:
+            # Store original product data for comparison
+            produto_original = produtos[0]
+            original_quantity = produto_original['quantidade']
+            original_cost = produto_original.get('preco_custo', 0)
+            original_price = produto_original['preco']
+            
+            # Create merchandise entry
+            entrada_success, nova_entrada = tester.test_create_entrada_mercadoria(produtos)
+            
+            if entrada_success:
+                # Test product update after entry
+                tester.test_product_update_after_entry(
+                    produto_original['id'], 
+                    original_quantity, 
+                    original_cost, 
+                    original_price
+                )
+        
+        # Test reports
+        tester.test_get_relatorio_entradas()
+        tester.test_get_relatorio_entradas_with_dates()
+        
+        # Test edge cases
+        tester.test_entrada_mercadoria_edge_cases()
+    
+    # Test 10: Login as colaborador
+    print("\n📋 FASE 10: TESTE COLABORADOR")
     if tester.test_login("colab1", "123456"):
         tester.test_get_me()
         tester.test_get_produtos()
@@ -926,6 +963,8 @@ def main():
         tester.test_get_boletos()
         # Test fechamento de caixa access for colaborador
         tester.test_fechamento_caixa_today()
+        # Test entrada de mercadorias access for colaborador
+        tester.test_get_entradas_mercadorias()
     
     # Print final results
     print("\n" + "=" * 50)
