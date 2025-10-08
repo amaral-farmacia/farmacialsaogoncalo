@@ -11,7 +11,6 @@ import {
   User,
   Percent,
   BarChart3,
-  Building2,
   FileText,
   Receipt,
   Calculator,
