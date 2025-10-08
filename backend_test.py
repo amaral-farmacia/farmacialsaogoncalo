@@ -1496,10 +1496,10 @@ class FarmaciaAPITester:
             "NFe List - No Auth",
             "GET",
             "notas-fiscais",
-            401  # Should return 401 Unauthorized
+            403  # FastAPI with HTTPBearer returns 403 Forbidden
         )
         
-        auth_test_passed = success  # Success means we got 401 as expected
+        auth_test_passed = success  # Success means we got 403 as expected
         
         # Test POST /notas-fiscais without auth
         test_data = {
@@ -1517,7 +1517,7 @@ class FarmaciaAPITester:
             "NFe Create - No Auth",
             "POST",
             "notas-fiscais",
-            401,
+            403,  # FastAPI with HTTPBearer returns 403 Forbidden
             data=test_data
         )
         
