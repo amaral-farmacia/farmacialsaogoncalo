@@ -208,25 +208,36 @@ const Multiunidade = ({ user }) => {
                 />
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="telefone">Telefone *</Label>
-                <Input
-                  id="telefone"
-                  value={formData.telefone}
-                  onChange={(e) => setFormData({...formData, telefone: e.target.value})}
-                  placeholder="(00) 0000-0000"
-                  required
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="telefone">Telefone *</Label>
+                  <Input
+                    id="telefone"
+                    value={formData.telefone}
+                    onChange={(e) => setFormData({...formData, telefone: e.target.value})}
+                    placeholder="(11) 99999-9999"
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="cnpj">CNPJ</Label>
+                  <Input
+                    id="cnpj"
+                    value={formData.cnpj}
+                    onChange={(e) => setFormData({...formData, cnpj: e.target.value})}
+                    placeholder="00.000.000/0001-00"
+                  />
+                </div>
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="responsavel">Responsável *</Label>
+                <Label htmlFor="responsavel">Responsável</Label>
                 <Input
                   id="responsavel"
                   value={formData.responsavel}
                   onChange={(e) => setFormData({...formData, responsavel: e.target.value})}
                   placeholder="Nome do responsável"
-                  required
                 />
               </div>
               
