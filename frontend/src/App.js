@@ -105,6 +105,7 @@ function App() {
                 <Route path="/boletos" element={<Boletos user={user} />} />
                 <Route path="/fechamento" element={<FechamentoCaixa user={user} />} />
                 <Route path="/entrada-mercadorias" element={<EntradaMercadorias user={user} />} />
+                <Route path="/transferencias" element={<TransferenciaProdutos user={user} />} />
                 {user.role === 'admin' && (
                   <>
                     <Route path="/relatorios" element={<Relatorios user={user} />} />
