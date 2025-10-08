@@ -132,6 +132,7 @@ const Produtos = ({ user }) => {
         codigo_barras: "",
         validade: "",
         preco: "",
+        preco_custo: "",
         quantidade: "",
         estoque_minimo: "10",
         localizacao: ""
