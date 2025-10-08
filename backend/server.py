@@ -1447,6 +1447,182 @@ async def delete_nota_fiscal(nota_id: str, current_user: UserBase = Depends(get_
     
     return {"message": "Nota fiscal deletada com sucesso"}
 
+# Unidades routes
+@api_router.get("/unidades")
+async def get_unidades(current_user: UserBase = Depends(get_current_user)):
+    """Lista todas as unidades"""
+    unidades = await db.unidades.find().to_list(1000)
+    result = []
+    for unidade in unidades:
+        # Calcular estatísticas da unidade
+        total_produtos = await db.produtos.count_documents({"unidade_id": unidade["id"]})
+        total_usuarios = await db.users.count_documents({"unidade_id": unidade["id"]})
+        
+        # Vendas do mês atual
+        start_month = datetime.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        vendas_mes = await db.vendas.find({
+            "unidade_id": unidade["id"],
+            "created_at": {"$gte": start_month}
+        }).to_list(1000)
+        vendas_mes_valor = sum(venda.get("total", 0) for venda in vendas_mes)
+        
+        unidade_clean = {
+            "id": unidade.get("id", str(unidade.get("_id", ""))),
+            "nome": unidade["nome"],
+            "endereco": unidade["endereco"],
+            "telefone": unidade["telefone"],
+            "email": unidade.get("email", ""),
+            "cnpj": unidade.get("cnpj", ""),
+            "responsavel": unidade.get("responsavel", ""),
+            "ativa": unidade.get("ativa", True),
+            "total_produtos": total_produtos,
+            "total_usuarios": total_usuarios,
+            "vendas_mes": vendas_mes_valor,
+            "created_at": unidade.get("created_at", "")
+        }
+        result.append(unidade_clean)
+    
+    return result
+
+@api_router.post("/unidades", response_model=Unidade)
+async def create_unidade(unidade_data: UnidadeCreate, current_user: UserBase = Depends(get_current_user)):
+    """Cria uma nova unidade"""
+    if current_user.role != 'admin':
+        raise HTTPException(status_code=403, detail="Apenas administradores podem criar unidades")
+    
+    unidade_obj = Unidade(**unidade_data.dict())
+    await db.unidades.insert_one(unidade_obj.dict())
+    
+    return unidade_obj
+
+@api_router.get("/dashboard/consolidado")
+async def get_dashboard_consolidado(current_user: UserBase = Depends(get_current_user)):
+    """Retorna dados consolidados de todas as unidades"""
+    if current_user.role != 'admin':
+        raise HTTPException(status_code=403, detail="Apenas administradores podem acessar dados consolidados")
+    
+    # Totais consolidados
+    total_produtos = await db.produtos.count_documents({})
+    total_clientes = await db.clientes.count_documents({})
+    total_usuarios = await db.users.count_documents({})
+    
+    # Vendas totais do mês
+    start_month = datetime.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    vendas = await db.vendas.find({"created_at": {"$gte": start_month}}).to_list(10000)
+    vendas_total = sum(venda.get("total", 0) for venda in vendas)
+    
+    # Lucro total (simulado - seria necessário ter dados de custo)
+    lucro_total = vendas_total * 0.3  # Assumindo 30% de margem média
+    
+    return {
+        "produtos_total": total_produtos,
+        "clientes_total": total_clientes,
+        "usuarios_total": total_usuarios,
+        "vendas_total": vendas_total,
+        "lucro_total": lucro_total
+    }
+
+# Transferências routes
+@api_router.get("/transferencias")
+async def get_transferencias(current_user: UserBase = Depends(get_current_user)):
+    """Lista transferências"""
+    transferencias = await db.transferencias.find().to_list(1000)
+    result = []
+    
+    for transferencia in transferencias:
+        # Buscar dados do produto
+        produto = await db.produtos.find_one({"id": transferencia["produto_id"]})
+        unidade_origem = await db.unidades.find_one({"id": transferencia["unidade_origem_id"]})
+        unidade_destino = await db.unidades.find_one({"id": transferencia["unidade_destino_id"]})
+        
+        transferencia_clean = {
+            "id": transferencia.get("id", str(transferencia.get("_id", ""))),
+            "produto_id": transferencia["produto_id"],
+            "produto_nome": produto["nome"] if produto else "Produto não encontrado",
+            "unidade_origem_id": transferencia["unidade_origem_id"],
+            "unidade_origem_nome": unidade_origem["nome"] if unidade_origem else "Origem não encontrada",
+            "unidade_destino_id": transferencia["unidade_destino_id"],
+            "unidade_destino_nome": unidade_destino["nome"] if unidade_destino else "Destino não encontrado",
+            "quantidade": transferencia["quantidade"],
+            "status": transferencia.get("status", "pendente"),
+            "observacoes": transferencia.get("observacoes", ""),
+            "created_at": transferencia.get("created_at", "")
+        }
+        result.append(transferencia_clean)
+    
+    return result
+
+@api_router.post("/transferencias", response_model=TransferenciaProduto)
+async def create_transferencia(transferencia_data: TransferenciaCreate, current_user: UserBase = Depends(get_current_user)):
+    """Cria uma nova transferência"""
+    # Verificar se o produto existe e tem quantidade suficiente
+    produto = await db.produtos.find_one({"id": transferencia_data.produto_id, "unidade_id": current_user.unidade_id})
+    if not produto:
+        raise HTTPException(status_code=404, detail="Produto não encontrado")
+    
+    if produto["quantidade"] < transferencia_data.quantidade:
+        raise HTTPException(status_code=400, detail="Quantidade insuficiente em estoque")
+    
+    transferencia_dict = transferencia_data.dict()
+    transferencia_dict.update({
+        "unidade_origem_id": current_user.unidade_id,
+        "usuario_id": current_user.id
+    })
+    
+    transferencia_obj = TransferenciaProduto(**transferencia_dict)
+    await db.transferencias.insert_one(transferencia_obj.dict())
+    
+    return transferencia_obj
+
+@api_router.put("/transferencias/{transferencia_id}/confirmar")
+async def confirmar_transferencia(transferencia_id: str, current_user: UserBase = Depends(get_current_user)):
+    """Confirma uma transferência (apenas admin)"""
+    if current_user.role != 'admin':
+        raise HTTPException(status_code=403, detail="Apenas administradores podem confirmar transferências")
+    
+    transferencia = await db.transferencias.find_one({"id": transferencia_id})
+    if not transferencia:
+        raise HTTPException(status_code=404, detail="Transferência não encontrada")
+    
+    if transferencia["status"] != "pendente":
+        raise HTTPException(status_code=400, detail="Transferência não está pendente")
+    
+    # Atualizar status da transferência
+    await db.transferencias.update_one(
+        {"id": transferencia_id},
+        {"$set": {"status": "confirmada"}}
+    )
+    
+    # Reduzir quantidade na unidade origem
+    await db.produtos.update_one(
+        {"id": transferencia["produto_id"], "unidade_id": transferencia["unidade_origem_id"]},
+        {"$inc": {"quantidade": -transferencia["quantidade"]}}
+    )
+    
+    # Verificar se produto existe na unidade destino
+    produto_destino = await db.produtos.find_one({
+        "codigo_barras": (await db.produtos.find_one({"id": transferencia["produto_id"]}))["codigo_barras"],
+        "unidade_id": transferencia["unidade_destino_id"]
+    })
+    
+    if produto_destino:
+        # Produto já existe na unidade destino, incrementar quantidade
+        await db.produtos.update_one(
+            {"id": produto_destino["id"]},
+            {"$inc": {"quantidade": transferencia["quantidade"]}}
+        )
+    else:
+        # Produto não existe na unidade destino, criar novo
+        produto_origem = await db.produtos.find_one({"id": transferencia["produto_id"]})
+        novo_produto = produto_origem.copy()
+        novo_produto["id"] = str(uuid.uuid4())
+        novo_produto["quantidade"] = transferencia["quantidade"]
+        novo_produto["unidade_id"] = transferencia["unidade_destino_id"]
+        
+        await db.produtos.insert_one(novo_produto)
+    
+    return {"message": "Transferência confirmada com sucesso"}
+
 # Include the router in the main app
 app.include_router(api_router)
 
