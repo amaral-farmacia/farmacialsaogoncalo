@@ -33,7 +33,8 @@ const Sidebar = ({ user, onLogout }) => {
     { path: "/clientes", icon: Users, label: "Clientes" },
     { path: "/promocoes", icon: Percent, label: "Promoções" },
     ...(user.role === 'admin' ? [
-      { path: "/relatorios", icon: BarChart3, label: "Relatórios" }
+      { path: "/relatorios", icon: BarChart3, label: "Relatórios" },
+      { path: "/dashboard-unidades", icon: Building2, label: "Dashboard Unidades" }
     ] : []),
     { path: "/boletos", icon: Receipt, label: "Boletos" },
     { path: "/fechamento", icon: Calculator, label: "Fechamento" },
