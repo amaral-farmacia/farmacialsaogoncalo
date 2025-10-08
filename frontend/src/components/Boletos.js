@@ -610,6 +610,159 @@ const Boletos = ({ user }) => {
         </DialogContent>
       </Dialog>
 
+      {/* Dialog de Edição */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Editar Boleto</DialogTitle>
+            <DialogDescription>
+              Atualize as informações do boleto
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handleEditSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit_fornecedor">Fornecedor/Empresa *</Label>
+              <Input
+                id="edit_fornecedor"
+                value={formData.fornecedor}
+                onChange={(e) => setFormData({...formData, fornecedor: e.target.value})}
+                required
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit_valor">Valor (R$) *</Label>
+                <Input
+                  id="edit_valor"
+                  type="number"
+                  step="0.01"
+                  value={formData.valor}
+                  onChange={(e) => setFormData({...formData, valor: e.target.value})}
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit_data_vencimento">Vencimento *</Label>
+                <Input
+                  id="edit_data_vencimento"
+                  type="date"
+                  value={formData.data_vencimento}
+                  onChange={(e) => setFormData({...formData, data_vencimento: e.target.value})}
+                  required
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="edit_categoria">Categoria</Label>
+              <Select value={formData.categoria} onValueChange={(value) => setFormData({...formData, categoria: value})}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="medicamentos">Medicamentos</SelectItem>
+                  <SelectItem value="material">Material</SelectItem>
+                  <SelectItem value="servicos">Serviços</SelectItem>
+                  <SelectItem value="impostos">Impostos</SelectItem>
+                  <SelectItem value="aluguel">Aluguel</SelectItem>
+                  <SelectItem value="outros">Outros</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="edit_numero_boleto">Número do Boleto</Label>
+              <Input
+                id="edit_numero_boleto"
+                value={formData.numero_boleto}
+                onChange={(e) => setFormData({...formData, numero_boleto: e.target.value})}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="edit_descricao">Descrição</Label>
+              <Input
+                id="edit_descricao"
+                value={formData.descricao}
+                onChange={(e) => setFormData({...formData, descricao: e.target.value})}
+              />
+            </div>
+            
+            <div className="flex gap-3 pt-4">
+              <Button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700">
+                Atualizar Boleto
+              </Button>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => {
+                  setEditDialogOpen(false);
+                  setBoletoSelecionado(null);
+                }}
+              >
+                Cancelar
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de Confirmação de Delete */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Confirmar Exclusão</DialogTitle>
+            <DialogDescription>
+              Esta ação não pode ser desfeita. O boleto será permanentemente removido.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {boletoSelecionado && (
+            <div className="space-y-4">
+              <div className="bg-red-50 border border-red-200 p-4 rounded-lg">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5" />
+                  <div className="flex-1">
+                    <h3 className="font-medium text-red-900 mb-1">
+                      Deletar boleto de {boletoSelecionado.fornecedor}
+                    </h3>
+                    <p className="text-sm text-red-700">
+                      Valor: {formatCurrency(boletoSelecionado.valor)}
+                    </p>
+                    <p className="text-sm text-red-700">
+                      Vencimento: {formatDate(boletoSelecionado.data_vencimento)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex gap-3 pt-4">
+                <Button
+                  onClick={deletarBoleto}
+                  className="flex-1 bg-red-600 hover:bg-red-700"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Sim, Deletar
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => {
+                    setDeleteDialogOpen(false);
+                    setBoletoSelecionado(null);
+                  }}
+                >
+                  Cancelar
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {filteredBoletos.length === 0 && !loading && (
         <div className="text-center py-12">
           <Receipt className="h-16 w-16 mx-auto mb-4 text-gray-300" />
