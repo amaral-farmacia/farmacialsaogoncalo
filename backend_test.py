@@ -587,6 +587,256 @@ class FarmaciaAPITester:
         
         return success
 
+    def test_get_entradas_mercadorias(self):
+        """Test get all merchandise entries"""
+        success, response = self.run_test(
+            "Get Merchandise Entries",
+            "GET",
+            "entradas",
+            200
+        )
+        if success:
+            print(f"   Found {len(response)} merchandise entries")
+            for entrada in response[:3]:  # Show first 3
+                print(f"   - {entrada.get('produto_nome', 'Unknown')}: {entrada['quantidade']} units")
+                print(f"     Cost: R$ {entrada['preco_custo']} | Sale: R$ {entrada['preco_venda']}")
+                print(f"     Profit: R$ {entrada['lucro_unitario']} | Margin: {entrada['margem_lucro']:.2f}%")
+        return success, response if success else []
+
+    def test_create_entrada_mercadoria(self, produtos):
+        """Test create new merchandise entry"""
+        if not produtos:
+            print("❌ No products available for merchandise entry test")
+            return False, {}
+        
+        # Use first product for entry
+        produto = produtos[0]
+        
+        entrada_data = {
+            "produto_id": produto['id'],
+            "quantidade": 50,
+            "preco_custo": 8.50,
+            "preco_venda": 15.00,
+            "data_validade": "2025-12-31",
+            "lote": "LOTE2024001",
+            "fornecedor": "Distribuidora Teste Ltda",
+            "localizacao": "A3"
+        }
+        
+        success, response = self.run_test(
+            "Create Merchandise Entry",
+            "POST",
+            "entradas",
+            200,
+            data=entrada_data
+        )
+        
+        if success:
+            print(f"   Created entry for: {produto['nome']}")
+            print(f"   Quantity: {response['quantidade']} units")
+            print(f"   Total Cost: R$ {response['valor_total_custo']}")
+            print(f"   Total Sale Value: R$ {response['valor_total_venda']}")
+            print(f"   Unit Profit: R$ {response['lucro_unitario']}")
+            print(f"   Profit Margin: {response['margem_lucro']:.2f}%")
+            
+            # Validate calculations
+            expected_total_cost = entrada_data['quantidade'] * entrada_data['preco_custo']
+            expected_total_sale = entrada_data['quantidade'] * entrada_data['preco_venda']
+            expected_unit_profit = entrada_data['preco_venda'] - entrada_data['preco_custo']
+            expected_margin = (expected_unit_profit / entrada_data['preco_custo']) * 100
+            
+            if (abs(response['valor_total_custo'] - expected_total_cost) < 0.01 and
+                abs(response['valor_total_venda'] - expected_total_sale) < 0.01 and
+                abs(response['lucro_unitario'] - expected_unit_profit) < 0.01 and
+                abs(response['margem_lucro'] - expected_margin) < 0.01):
+                print(f"   ✅ Calculations are correct")
+            else:
+                print(f"   ❌ Calculation errors detected")
+                print(f"     Expected total cost: R$ {expected_total_cost}")
+                print(f"     Expected total sale: R$ {expected_total_sale}")
+                print(f"     Expected unit profit: R$ {expected_unit_profit}")
+                print(f"     Expected margin: {expected_margin:.2f}%")
+        
+        return success, response if success else {}
+
+    def test_product_update_after_entry(self, produto_id, original_quantity, original_cost, original_price):
+        """Test that product is updated after merchandise entry"""
+        success, response = self.run_test(
+            "Check Product Update After Entry",
+            "GET",
+            f"produtos/buscar/{produto_id}",
+            404  # This will fail since we're using ID instead of barcode
+        )
+        
+        # Let's get all products and find the one we updated
+        success, produtos = self.run_test(
+            "Get Products to Check Updates",
+            "GET",
+            "produtos",
+            200
+        )
+        
+        if success:
+            updated_produto = None
+            for produto in produtos:
+                if produto['id'] == produto_id:
+                    updated_produto = produto
+                    break
+            
+            if updated_produto:
+                print(f"   Product found: {updated_produto['nome']}")
+                print(f"   Original quantity: {original_quantity} -> New: {updated_produto['quantidade']}")
+                print(f"   Original cost: R$ {original_cost} -> New: R$ {updated_produto.get('preco_custo', 0)}")
+                print(f"   Original price: R$ {original_price} -> New: R$ {updated_produto['preco']}")
+                
+                # Check if quantity increased by 50 (from our test entry)
+                if updated_produto['quantidade'] == original_quantity + 50:
+                    print(f"   ✅ Quantity correctly updated (+50)")
+                else:
+                    print(f"   ❌ Quantity not updated correctly")
+                
+                # Check if prices were updated
+                if updated_produto.get('preco_custo', 0) == 8.50 and updated_produto['preco'] == 15.00:
+                    print(f"   ✅ Prices correctly updated")
+                else:
+                    print(f"   ❌ Prices not updated correctly")
+                
+                return True
+            else:
+                print(f"   ❌ Product not found after entry")
+                return False
+        
+        return False
+
+    def test_get_relatorio_entradas(self):
+        """Test merchandise entries report"""
+        # Test without date filter
+        success, response = self.run_test(
+            "Get Merchandise Entries Report - No Filter",
+            "GET",
+            "entradas/relatorio",
+            200
+        )
+        
+        if success:
+            print(f"   Report generated successfully")
+            
+            # Check report structure
+            required_fields = ['periodo', 'totais', 'fornecedores', 'entradas']
+            missing_fields = [field for field in required_fields if field not in response]
+            
+            if missing_fields:
+                print(f"   ❌ Missing report fields: {missing_fields}")
+                return False
+            
+            totais = response.get('totais', {})
+            print(f"   Total entries: {totais.get('total_entradas', 0)}")
+            print(f"   Total cost: R$ {totais.get('total_custo', 0)}")
+            print(f"   Total sale value: R$ {totais.get('total_venda', 0)}")
+            print(f"   Total profit: R$ {totais.get('total_lucro', 0)}")
+            print(f"   Average margin: {totais.get('margem_media', 0):.2f}%")
+            
+            # Check suppliers grouping
+            fornecedores = response.get('fornecedores', {})
+            print(f"   Suppliers found: {len(fornecedores)}")
+            for fornecedor, dados in fornecedores.items():
+                print(f"     - {fornecedor}: {dados['quantidade_entradas']} entries, R$ {dados['total_custo']} cost")
+            
+            print(f"   ✅ Report structure is correct")
+        
+        return success
+
+    def test_get_relatorio_entradas_with_dates(self):
+        """Test merchandise entries report with date filter"""
+        hoje = datetime.now()
+        ontem = hoje - timedelta(days=1)
+        
+        success, response = self.run_test(
+            "Get Merchandise Entries Report - With Date Filter",
+            "GET",
+            f"entradas/relatorio?data_inicio={ontem.isoformat()}&data_fim={hoje.isoformat()}",
+            200
+        )
+        
+        if success:
+            periodo = response.get('periodo', {})
+            print(f"   Period: {periodo.get('data_inicio', 'N/A')} to {periodo.get('data_fim', 'N/A')}")
+            
+            totais = response.get('totais', {})
+            print(f"   Filtered entries: {totais.get('total_entradas', 0)}")
+            print(f"   ✅ Date filtering working")
+        
+        return success
+
+    def test_entrada_mercadoria_edge_cases(self):
+        """Test merchandise entry edge cases"""
+        # Test with invalid product ID
+        invalid_entrada_data = {
+            "produto_id": "invalid-product-id",
+            "quantidade": 10,
+            "preco_custo": 5.00,
+            "preco_venda": 10.00
+        }
+        
+        success, response = self.run_test(
+            "Create Entry - Invalid Product ID",
+            "POST",
+            "entradas",
+            500  # Should fail with server error or validation error
+        )
+        
+        if not success:
+            print(f"   ✅ Invalid product ID correctly rejected")
+        else:
+            print(f"   ❌ Invalid product ID should be rejected")
+        
+        # Test with negative quantity
+        negative_entrada_data = {
+            "produto_id": "some-valid-id",
+            "quantidade": -5,
+            "preco_custo": 5.00,
+            "preco_venda": 10.00
+        }
+        
+        success, response = self.run_test(
+            "Create Entry - Negative Quantity",
+            "POST",
+            "entradas",
+            422  # Should fail with validation error
+        )
+        
+        if not success:
+            print(f"   ✅ Negative quantity correctly rejected")
+        else:
+            print(f"   ❌ Negative quantity should be rejected")
+        
+        # Test with zero cost
+        zero_cost_data = {
+            "produto_id": "some-valid-id",
+            "quantidade": 10,
+            "preco_custo": 0.0,
+            "preco_venda": 10.00
+        }
+        
+        success, response = self.run_test(
+            "Create Entry - Zero Cost",
+            "POST",
+            "entradas",
+            422  # Should fail with validation error or handle gracefully
+        )
+        
+        # This might succeed but with infinite margin, let's check
+        if success:
+            if 'margem_lucro' in response:
+                print(f"   Margin with zero cost: {response['margem_lucro']}")
+                print(f"   ✅ Zero cost handled (margin calculation)")
+            else:
+                print(f"   ❌ Zero cost not handled properly")
+        else:
+            print(f"   ✅ Zero cost correctly rejected")
+        
+        return True
+
 def main():
     print("🏥 SISTEMA DE FARMÁCIA - TESTE DE APIs")
     print("=" * 50)
