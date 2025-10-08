@@ -1329,6 +1329,30 @@ async def get_relatorio_nfe(
         fornecedores[fornecedor]["total_notas"] += 1
         fornecedores[fornecedor]["valor_total"] += nota["valor_total"]
     
+    # Clean notas data to avoid ObjectId issues
+    notas_clean = []
+    for nota in notas[:50]:  # Limitar a 50 para performance
+        nota_clean = {
+            "id": nota.get("id", str(nota.get("_id", ""))),
+            "numero": nota["numero"],
+            "serie": nota["serie"],
+            "fornecedor_nome": nota["fornecedor_nome"],
+            "fornecedor_cnpj": nota["fornecedor_cnpj"],
+            "data_emissao": nota["data_emissao"],
+            "data_recebimento": nota.get("data_recebimento", ""),
+            "valor_total": float(nota["valor_total"]),
+            "valor_produtos": float(nota["valor_produtos"]),
+            "valor_servicos": float(nota.get("valor_servicos", 0)),
+            "valor_desconto": float(nota.get("valor_desconto", 0)),
+            "valor_frete": float(nota.get("valor_frete", 0)),
+            "icms_total": float(nota.get("icms_total", 0)),
+            "ipi_total": float(nota.get("ipi_total", 0)),
+            "status": nota.get("status", "recebida"),
+            "observacoes": nota.get("observacoes", ""),
+            "created_at": nota.get("created_at", "")
+        }
+        notas_clean.append(nota_clean)
+
     return {
         "periodo": {
             "data_inicio": data_inicio,
@@ -1341,7 +1365,7 @@ async def get_relatorio_nfe(
             "valor_impostos_geral": valor_impostos_geral
         },
         "fornecedores": fornecedores,
-        "notas": notas[:50]  # Limitar a 50 para performance
+        "notas": notas_clean
     }
 
 @api_router.get("/notas-fiscais/{nota_id}")
