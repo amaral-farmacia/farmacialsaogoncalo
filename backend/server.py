@@ -543,6 +543,63 @@ async def init_db():
         ]
         
         await db.notas_fiscais.insert_many(notas_fiscais)
+        
+        # Create sample unidades
+        unidade_principal_id = unidade_id  # A unidade padrão
+        unidades_extras = [
+            {
+                "id": str(uuid.uuid4()),
+                "nome": "Farmácia São Gonçalo - Centro",
+                "endereco": "Rua Principal, 123 - Centro, São Gonçalo - RJ",
+                "telefone": "(21) 99999-1111",
+                "email": "centro@farmaciasaogoncalo.com.br",
+                "cnpj": "12.345.678/0001-01",
+                "responsavel": "Maria Silva",
+                "ativa": True,
+                "created_at": datetime.now(timezone.utc)
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "nome": "Farmácia São Gonçalo - Bairro Norte",
+                "endereco": "Av. Norte, 456 - Bairro Norte, São Gonçalo - RJ", 
+                "telefone": "(21) 99999-2222",
+                "email": "norte@farmaciasaogoncalo.com.br",
+                "cnpj": "12.345.678/0001-02",
+                "responsavel": "João Santos",
+                "ativa": True,
+                "created_at": datetime.now(timezone.utc)
+            }
+        ]
+        
+        await db.unidades.insert_many(unidades_extras)
+        
+        # Create sample transferências
+        transferencias = [
+            {
+                "id": str(uuid.uuid4()),
+                "produto_id": produtos[0]["id"],  # Paracetamol
+                "unidade_origem_id": unidade_principal_id,
+                "unidade_destino_id": unidades_extras[0]["id"],
+                "quantidade": 50,
+                "status": "pendente",
+                "observacoes": "Transferência de estoque excedente",
+                "usuario_id": users[0]["id"],
+                "created_at": datetime.now(timezone.utc)
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "produto_id": produtos[1]["id"],  # Dipirona
+                "unidade_origem_id": unidade_principal_id,
+                "unidade_destino_id": unidades_extras[1]["id"],
+                "quantidade": 30,
+                "status": "confirmada",
+                "observacoes": "Reposição de estoque",
+                "usuario_id": users[0]["id"],
+                "created_at": datetime.now(timezone.utc)
+            }
+        ]
+        
+        await db.transferencias.insert_many(transferencias)
 
 # Authentication routes
 @api_router.post("/auth/login", response_model=Token)
