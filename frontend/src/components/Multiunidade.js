@@ -192,7 +192,7 @@ const Multiunidade = ({ user }) => {
                   id="nome"
                   value={formData.nome}
                   onChange={(e) => setFormData({...formData, nome: e.target.value})}
-                  placeholder="Ex: Farmácia São Gonçalo - Centro"
+                  placeholder="Ex: Farmácia Centro"
                   required
                 />
               </div>
