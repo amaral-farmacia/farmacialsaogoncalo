@@ -251,3 +251,51 @@ agent_communication:
     message: "✅ BOLETOS SYSTEM TESTING COMPLETED SUCCESSFULLY: Comprehensive backend testing performed with 100% success rate. All CRUD operations working perfectly: GET /api/boletos with automatic status updates, POST /api/boletos for creation, PUT /api/boletos/{id}/pagar for payments. Dashboard integration verified with all required boletos fields present. Status logic correctly implemented (pendente->vencido based on dates). Payment workflow fully functional. Edge cases handled properly (404 for invalid IDs, 422 for validation errors). Authentication working correctly. System ready for production use. Note: Sample data differs from expected (BARTOFIL instead of Cimed/Boticário/Distribuidora São Paulo) but functionality is identical and working correctly."
   - agent: "testing"
     message: "✅ FECHAMENTO DE CAIXA BACKEND TESTING COMPLETED: Comprehensive testing performed with 100% success rate. GET /api/caixa/fechamento/{data} endpoint working perfectly with complete data structure validation. All required fields present and correctly formatted. Date-based logic working: today shows real data (4 sales, R$ 75.0 recebimentos, 3 boletos paid, R$ 2586.27 pagamentos), past/future dates return zeros, invalid dates handled gracefully. Integration with vendas and boletos collections verified. Payment methods properly categorized. Authentication working. All edge cases tested successfully. System ready for production use."
+
+  - task: "Entrada de Mercadorias Backend"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Sistema completo implementado: Modelo EntradaMercadoria com cálculos de lucro/margem, rotas GET/POST /entradas, relatório de entradas por período, atualização automática de produtos com novos preços/quantidade"
+
+  - task: "Entrada de Mercadorias Frontend"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/components/EntradaMercadorias.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Interface existente atualizada com scanner de código de barras, modo rápido de entrada, cálculos em tempo real de lucro/margem, integração com novas rotas do backend"
+
+  - task: "App.js Route Integration"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Rota /entrada-mercadorias adicionada ao App.js"
+
+  - task: "Sidebar Menu Integration"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/components/Sidebar.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Menu 'Entrada de Mercadorias' adicionado ao Sidebar com ícone PackagePlus"
