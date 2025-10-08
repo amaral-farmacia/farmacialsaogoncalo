@@ -338,10 +338,20 @@ const Multiunidade = ({ user }) => {
                     <MapPin className="h-4 w-4" />
                     <span className="line-clamp-2">{unidade.endereco}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4" />
-                    <span>Responsável: {unidade.responsavel}</span>
-                  </div>
+                  
+                  {unidade.telefone && (
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-4 w-4" />
+                      <span>{unidade.telefone}</span>
+                    </div>
+                  )}
+                  
+                  {unidade.responsavel && (
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4" />
+                      <span>{unidade.responsavel}</span>
+                    </div>
+                  )}
                 </div>
                 
                 {/* Estatísticas Rápidas */}
