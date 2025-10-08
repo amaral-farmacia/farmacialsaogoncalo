@@ -1219,8 +1219,8 @@ def main():
     if fiados_success and fiados:
         tester.test_pagar_fiado(fiados)
     
-    # Test 6: Boletos System
-    print("\n📋 FASE 6: SISTEMA DE BOLETOS")
+    # Test 6: Boletos System (Enhanced with Edit/Delete)
+    print("\n📋 FASE 6: SISTEMA DE BOLETOS (CRUD COMPLETO)")
     boletos_success, boletos = tester.test_get_boletos()
     
     # Test create boleto
@@ -1229,6 +1229,38 @@ def main():
     # Test pay boleto
     if boletos_success and boletos:
         tester.test_pagar_boleto(boletos)
+    
+    # NEW: Test edit boleto functionality
+    print("\n🔧 TESTING BOLETOS EDIT FUNCTIONALITY")
+    if boletos_success and boletos:
+        edit_success, edited_boleto = tester.test_edit_boleto(boletos)
+        
+        # Update boletos list with edited boleto for further tests
+        if edit_success:
+            # Replace the edited boleto in our list
+            for i, boleto in enumerate(boletos):
+                if boleto['id'] == edited_boleto['id']:
+                    boletos[i] = edited_boleto
+                    break
+    
+    # Test edit with invalid ID
+    tester.test_edit_boleto_invalid_id()
+    
+    # NEW: Test delete boleto functionality
+    print("\n🗑️ TESTING BOLETOS DELETE FUNCTIONALITY")
+    if boletos_success and boletos:
+        tester.test_delete_boleto(boletos)
+    
+    # Test delete with invalid ID
+    tester.test_delete_boleto_invalid_id()
+    
+    # Test access control
+    print("\n🔒 TESTING BOLETOS ACCESS CONTROL")
+    tester.test_boletos_access_control()
+    
+    # Comprehensive CRUD test
+    print("\n🧪 COMPREHENSIVE BOLETOS CRUD TEST")
+    tester.test_comprehensive_boletos_crud()
     
     # Test 7: Dashboard with Boletos
     print("\n📋 FASE 7: DASHBOARD COM BOLETOS")
