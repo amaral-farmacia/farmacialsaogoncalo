@@ -450,6 +450,143 @@ class FarmaciaAPITester:
         
         return success
 
+    def test_fechamento_caixa_today(self):
+        """Test cash closing for today's date"""
+        hoje = datetime.now().strftime("%Y-%m-%d")
+        
+        success, response = self.run_test(
+            f"Cash Closing - Today ({hoje})",
+            "GET",
+            f"caixa/fechamento/{hoje}",
+            200
+        )
+        
+        if success:
+            print(f"   Data: {response.get('data', 'N/A')}")
+            
+            # Check recebimentos structure
+            recebimentos = response.get('recebimentos', {})
+            print(f"   💰 RECEBIMENTOS:")
+            for metodo, valor in recebimentos.items():
+                print(f"     - {metodo.capitalize()}: R$ {valor}")
+            
+            # Check pagamentos structure
+            pagamentos = response.get('pagamentos', {})
+            print(f"   💸 PAGAMENTOS:")
+            if pagamentos:
+                for fornecedor, valor in pagamentos.items():
+                    print(f"     - {fornecedor}: R$ {valor}")
+            else:
+                print(f"     - Nenhum pagamento hoje")
+            
+            # Check totals
+            total_recebimentos = response.get('total_recebimentos', 0)
+            total_pagamentos = response.get('total_pagamentos', 0)
+            saldo_dia = response.get('saldo_dia', 0)
+            
+            print(f"   📊 TOTAIS:")
+            print(f"     - Total Recebimentos: R$ {total_recebimentos}")
+            print(f"     - Total Pagamentos: R$ {total_pagamentos}")
+            print(f"     - Saldo do Dia: R$ {saldo_dia}")
+            
+            # Check counters
+            total_vendas = response.get('total_vendas', 0)
+            total_boletos_pagos = response.get('total_boletos_pagos', 0)
+            
+            print(f"   📈 CONTADORES:")
+            print(f"     - Total de Vendas: {total_vendas}")
+            print(f"     - Boletos Pagos: {total_boletos_pagos}")
+            
+            # Validate required fields
+            required_fields = ['data', 'recebimentos', 'pagamentos', 'total_recebimentos', 
+                             'total_pagamentos', 'saldo_dia', 'total_vendas', 'total_boletos_pagos']
+            missing_fields = [field for field in required_fields if field not in response]
+            
+            if missing_fields:
+                print(f"   ❌ Missing fields: {missing_fields}")
+                return False
+            
+            # Validate recebimentos structure
+            expected_metodos = ['dinheiro', 'pix', 'debito', 'credito', 'fiado']
+            missing_metodos = [metodo for metodo in expected_metodos if metodo not in recebimentos]
+            
+            if missing_metodos:
+                print(f"   ❌ Missing payment methods: {missing_metodos}")
+                return False
+            
+            print(f"   ✅ All required fields and payment methods present")
+        
+        return success
+
+    def test_fechamento_caixa_past_date(self):
+        """Test cash closing for a past date"""
+        past_date = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")
+        
+        success, response = self.run_test(
+            f"Cash Closing - Past Date ({past_date})",
+            "GET",
+            f"caixa/fechamento/{past_date}",
+            200
+        )
+        
+        if success:
+            print(f"   Data: {response.get('data', 'N/A')}")
+            print(f"   Total Recebimentos: R$ {response.get('total_recebimentos', 0)}")
+            print(f"   Total Pagamentos: R$ {response.get('total_pagamentos', 0)}")
+            print(f"   Saldo do Dia: R$ {response.get('saldo_dia', 0)}")
+            print(f"   Total de Vendas: {response.get('total_vendas', 0)}")
+        
+        return success
+
+    def test_fechamento_caixa_future_date(self):
+        """Test cash closing for a future date"""
+        future_date = (datetime.now() + timedelta(days=7)).strftime("%Y-%m-%d")
+        
+        success, response = self.run_test(
+            f"Cash Closing - Future Date ({future_date})",
+            "GET",
+            f"caixa/fechamento/{future_date}",
+            200
+        )
+        
+        if success:
+            print(f"   Data: {response.get('data', 'N/A')}")
+            # Future dates should return zero values
+            total_recebimentos = response.get('total_recebimentos', 0)
+            total_vendas = response.get('total_vendas', 0)
+            
+            if total_recebimentos == 0 and total_vendas == 0:
+                print(f"   ✅ Future date correctly returns zero values")
+            else:
+                print(f"   ❌ Future date should return zero values")
+                print(f"   Total Recebimentos: R$ {total_recebimentos}")
+                print(f"   Total Vendas: {total_vendas}")
+        
+        return success
+
+    def test_fechamento_caixa_invalid_date(self):
+        """Test cash closing with invalid date format"""
+        invalid_date = "invalid-date"
+        
+        success, response = self.run_test(
+            f"Cash Closing - Invalid Date ({invalid_date})",
+            "GET",
+            f"caixa/fechamento/{invalid_date}",
+            200  # API should handle gracefully and return empty data
+        )
+        
+        if success:
+            # Should return empty/zero data for invalid dates
+            total_recebimentos = response.get('total_recebimentos', 0)
+            total_vendas = response.get('total_vendas', 0)
+            
+            if total_recebimentos == 0 and total_vendas == 0:
+                print(f"   ✅ Invalid date handled gracefully with zero values")
+            else:
+                print(f"   ❌ Invalid date should return zero values")
+        
+        return success
+
 def main():
     print("🏥 SISTEMA DE FARMÁCIA - TESTE DE APIs")
     print("=" * 50)
