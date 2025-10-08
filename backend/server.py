@@ -1120,6 +1120,192 @@ async def get_relatorio_entradas(
         "entradas": entradas_clean
     }
 
+# Notas Fiscais routes
+@api_router.get("/notas-fiscais")
+async def get_notas_fiscais(current_user: UserBase = Depends(get_current_user)):
+    """Lista todas as notas fiscais"""
+    notas = await db.notas_fiscais.find({"unidade_id": current_user.unidade_id}).to_list(1000)
+    result = []
+    for nota in notas:
+        nota_clean = {
+            "id": nota.get("id", str(nota.get("_id", ""))),
+            "numero": nota["numero"],
+            "serie": nota["serie"],
+            "fornecedor_nome": nota["fornecedor_nome"],
+            "fornecedor_cnpj": nota["fornecedor_cnpj"],
+            "data_emissao": nota["data_emissao"],
+            "data_recebimento": nota.get("data_recebimento", ""),
+            "valor_total": float(nota["valor_total"]),
+            "valor_produtos": float(nota["valor_produtos"]),
+            "valor_servicos": float(nota.get("valor_servicos", 0)),
+            "valor_desconto": float(nota.get("valor_desconto", 0)),
+            "valor_frete": float(nota.get("valor_frete", 0)),
+            "icms_total": float(nota.get("icms_total", 0)),
+            "ipi_total": float(nota.get("ipi_total", 0)),
+            "status": nota.get("status", "recebida"),
+            "produtos": nota.get("produtos", []),
+            "observacoes": nota.get("observacoes", ""),
+            "created_at": nota.get("created_at", "")
+        }
+        result.append(nota_clean)
+    
+    return result
+
+@api_router.post("/notas-fiscais", response_model=NotaFiscal)
+async def create_nota_fiscal(nota_data: NotaFiscalCreate, current_user: UserBase = Depends(get_current_user)):
+    """Registra uma nova nota fiscal"""
+    nota_dict = nota_data.dict()
+    nota_dict.update({
+        "usuario_id": current_user.id,
+        "unidade_id": current_user.unidade_id,
+        "data_recebimento": datetime.now().strftime('%Y-%m-%d'),
+        "status": "processada"
+    })
+    
+    nota_obj = NotaFiscal(**nota_dict)
+    await db.notas_fiscais.insert_one(nota_obj.dict())
+    
+    return nota_obj
+
+@api_router.get("/notas-fiscais/{nota_id}")
+async def get_nota_fiscal(nota_id: str, current_user: UserBase = Depends(get_current_user)):
+    """Busca uma nota fiscal específica"""
+    nota = await db.notas_fiscais.find_one({"id": nota_id, "unidade_id": current_user.unidade_id})
+    
+    if not nota:
+        raise HTTPException(status_code=404, detail="Nota fiscal não encontrada")
+    
+    return {
+        "id": nota.get("id", str(nota.get("_id", ""))),
+        "numero": nota["numero"],
+        "serie": nota["serie"],
+        "fornecedor_nome": nota["fornecedor_nome"],
+        "fornecedor_cnpj": nota["fornecedor_cnpj"],
+        "data_emissao": nota["data_emissao"],
+        "data_recebimento": nota.get("data_recebimento", ""),
+        "valor_total": float(nota["valor_total"]),
+        "valor_produtos": float(nota["valor_produtos"]),
+        "valor_servicos": float(nota.get("valor_servicos", 0)),
+        "valor_desconto": float(nota.get("valor_desconto", 0)),
+        "valor_frete": float(nota.get("valor_frete", 0)),
+        "icms_total": float(nota.get("icms_total", 0)),
+        "ipi_total": float(nota.get("ipi_total", 0)),
+        "status": nota.get("status", "recebida"),
+        "produtos": nota.get("produtos", []),
+        "observacoes": nota.get("observacoes", ""),
+        "created_at": nota.get("created_at", "")
+    }
+
+@api_router.delete("/notas-fiscais/{nota_id}")
+async def delete_nota_fiscal(nota_id: str, current_user: UserBase = Depends(get_current_user)):
+    """Deleta uma nota fiscal"""
+    result = await db.notas_fiscais.delete_one({
+        "id": nota_id, 
+        "unidade_id": current_user.unidade_id
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Nota fiscal não encontrada")
+    
+    return {"message": "Nota fiscal deletada com sucesso"}
+
+@api_router.post("/notas-fiscais/upload-xml")
+async def upload_xml_nfe(current_user: UserBase = Depends(get_current_user)):
+    """Simula o upload e processamento de XML da NFe"""
+    # Esta é uma simulação - em produção seria necessário implementar
+    # processamento real de XML, OCR, integração com SEFAZ, etc.
+    
+    # Retorna dados mockados para demonstração
+    return {
+        "status": "success",
+        "dados_extraidos": {
+            "numero": "000123456",
+            "serie": "001",
+            "fornecedor_nome": "Distribuidora Exemplo LTDA",
+            "fornecedor_cnpj": "12.345.678/0001-90",
+            "data_emissao": "2024-01-15",
+            "valor_total": 1500.75,
+            "valor_produtos": 1350.00,
+            "valor_frete": 50.00,
+            "valor_desconto": 25.00,
+            "icms_total": 125.75,
+            "produtos": [
+                {
+                    "codigo": "123456",
+                    "nome": "Paracetamol 500mg",
+                    "quantidade": 100,
+                    "valor_unitario": 2.50,
+                    "valor_total": 250.00
+                },
+                {
+                    "codigo": "789012",
+                    "nome": "Dipirona 500mg",
+                    "quantidade": 200,
+                    "valor_unitario": 1.80,
+                    "valor_total": 360.00
+                }
+            ]
+        },
+        "message": "XML processado com sucesso"
+    }
+
+@api_router.get("/notas-fiscais/relatorio")
+async def get_relatorio_nfe(
+    data_inicio: str = None,
+    data_fim: str = None,
+    current_user: UserBase = Depends(get_current_user)
+):
+    """Relatório de notas fiscais por período"""
+    filtros = {"unidade_id": current_user.unidade_id}
+    
+    # Adicionar filtro de data se fornecido
+    if data_inicio and data_fim:
+        try:
+            start_date = datetime.fromisoformat(data_inicio.replace('Z', '+00:00'))
+            end_date = datetime.fromisoformat(data_fim.replace('Z', '+00:00'))
+            filtros["created_at"] = {
+                "$gte": start_date,
+                "$lte": end_date
+            }
+        except:
+            pass
+    
+    notas = await db.notas_fiscais.find(filtros).to_list(1000)
+    
+    # Calcular totais
+    total_notas = len(notas)
+    valor_total_geral = sum(nota["valor_total"] for nota in notas)
+    valor_produtos_geral = sum(nota["valor_produtos"] for nota in notas)
+    valor_impostos_geral = sum(nota.get("icms_total", 0) + nota.get("ipi_total", 0) for nota in notas)
+    
+    # Agrupar por fornecedor
+    fornecedores = {}
+    for nota in notas:
+        fornecedor = nota["fornecedor_nome"]
+        if fornecedor not in fornecedores:
+            fornecedores[fornecedor] = {
+                "total_notas": 0,
+                "valor_total": 0,
+                "cnpj": nota["fornecedor_cnpj"]
+            }
+        fornecedores[fornecedor]["total_notas"] += 1
+        fornecedores[fornecedor]["valor_total"] += nota["valor_total"]
+    
+    return {
+        "periodo": {
+            "data_inicio": data_inicio,
+            "data_fim": data_fim
+        },
+        "totais": {
+            "total_notas": total_notas,
+            "valor_total_geral": valor_total_geral,
+            "valor_produtos_geral": valor_produtos_geral,
+            "valor_impostos_geral": valor_impostos_geral
+        },
+        "fornecedores": fornecedores,
+        "notas": notas[:50]  # Limitar a 50 para performance
+    }
+
 # Include the router in the main app
 app.include_router(api_router)
 
