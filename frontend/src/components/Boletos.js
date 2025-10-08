@@ -533,9 +533,18 @@ const Boletos = ({ user }) => {
                     variant="outline"
                     size="sm"
                     className="w-10 h-8 p-0"
-                    onClick={() => toast.info('Funcionalidade em desenvolvimento')}
+                    onClick={() => abrirEdicao(boleto)}
                   >
-                    <Eye className="h-3 w-3" />
+                    <Edit className="h-3 w-3" />
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-10 h-8 p-0 border-red-200 hover:bg-red-50"
+                    onClick={() => confirmarDelete(boleto)}
+                  >
+                    <Trash2 className="h-3 w-3 text-red-600" />
                   </Button>
                 </div>
                 
