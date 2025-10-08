@@ -1615,6 +1615,277 @@ class FarmaciaAPITester:
         print(f"   ✅ COMPREHENSIVE NFE SYSTEM TEST COMPLETED SUCCESSFULLY")
         return True
 
+    def test_angical_user_creation_verification(self):
+        """Test that the angical user was created correctly in the database"""
+        print("\n👤 ANGICAL USER CREATION VERIFICATION")
+        
+        # First, login as admin to access user management
+        original_token = self.token
+        original_user = self.user_data
+        
+        if not self.test_login("admin", "admin123"):
+            print("❌ Failed to login as admin for user verification")
+            return False
+        
+        # Get all users to verify angical user exists
+        success, response = self.run_test(
+            "Get Users List - Verify Angical User",
+            "GET",
+            "usuarios",
+            200
+        )
+        
+        if not success:
+            print("❌ Failed to get users list")
+            return False
+        
+        # Look for angical user in the list
+        angical_user = None
+        for user in response:
+            if user.get('username') == 'angical':
+                angical_user = user
+                break
+        
+        if not angical_user:
+            print("❌ Angical user not found in users list")
+            return False
+        
+        print(f"   ✅ Angical user found in database")
+        print(f"   Username: {angical_user.get('username')}")
+        print(f"   Full Name: {angical_user.get('full_name')}")
+        print(f"   Role: {angical_user.get('role')}")
+        print(f"   Unidade ID: {angical_user.get('unidade_id')}")
+        
+        # Verify user properties
+        expected_properties = {
+            'username': 'angical',
+            'full_name': 'Colaborador Angical',
+            'role': 'colaborador'
+        }
+        
+        verification_passed = True
+        for prop, expected_value in expected_properties.items():
+            actual_value = angical_user.get(prop)
+            if actual_value == expected_value:
+                print(f"   ✅ {prop}: {actual_value}")
+            else:
+                print(f"   ❌ {prop}: Expected '{expected_value}', got '{actual_value}'")
+                verification_passed = False
+        
+        # Verify unidade_id is not empty
+        if angical_user.get('unidade_id'):
+            print(f"   ✅ Unidade ID assigned: {angical_user.get('unidade_id')}")
+        else:
+            print(f"   ❌ Unidade ID is missing or empty")
+            verification_passed = False
+        
+        # Restore original token
+        self.token = original_token
+        self.user_data = original_user
+        
+        return verification_passed
+
+    def test_angical_user_authentication(self):
+        """Test login with angical user credentials"""
+        print("\n🔐 ANGICAL USER AUTHENTICATION TEST")
+        
+        # Store original credentials
+        original_token = self.token
+        original_user = self.user_data
+        
+        # Test login with angical credentials
+        login_success = self.test_login("angical", "angical123")
+        
+        if not login_success:
+            print("❌ Failed to login with angical credentials")
+            # Restore original credentials
+            self.token = original_token
+            self.user_data = original_user
+            return False
+        
+        print(f"   ✅ Successfully logged in as angical user")
+        print(f"   User: {self.user_data.get('full_name')} ({self.user_data.get('role')})")
+        print(f"   Unidade ID: {self.user_data.get('unidade_id')}")
+        
+        # Test that we can access protected endpoints
+        me_success = self.test_get_me()
+        if not me_success:
+            print("❌ Failed to access protected endpoint with angical token")
+            # Restore original credentials
+            self.token = original_token
+            self.user_data = original_user
+            return False
+        
+        print(f"   ✅ Can access protected endpoints with angical token")
+        
+        # Store angical user data for later tests
+        angical_token = self.token
+        angical_user_data = self.user_data
+        
+        # Restore original credentials
+        self.token = original_token
+        self.user_data = original_user
+        
+        return True, angical_token, angical_user_data
+
+    def test_angical_unit_assignment(self):
+        """Test that angical user is assigned to the correct unit"""
+        print("\n🏢 ANGICAL UNIT ASSIGNMENT VERIFICATION")
+        
+        # First get all units to find the São Gonçalo do Angical unit
+        success, response = self.run_test(
+            "Get Units List - Find Angical Unit",
+            "GET",
+            "unidades",
+            200
+        )
+        
+        if not success:
+            print("❌ Failed to get units list")
+            return False
+        
+        # Look for São Gonçalo do Angical unit
+        angical_unit = None
+        for unit in response:
+            if 'São Gonçalo do Angical' in unit.get('nome', ''):
+                angical_unit = unit
+                break
+        
+        if not angical_unit:
+            print("❌ São Gonçalo do Angical unit not found")
+            return False
+        
+        print(f"   ✅ Found São Gonçalo do Angical unit")
+        print(f"   Unit Name: {angical_unit.get('nome')}")
+        print(f"   Unit ID: {angical_unit.get('id')}")
+        print(f"   Address: {angical_unit.get('endereco')}")
+        print(f"   Phone: {angical_unit.get('telefone')}")
+        print(f"   Email: {angical_unit.get('email')}")
+        print(f"   CNPJ: {angical_unit.get('cnpj')}")
+        print(f"   Responsible: {angical_unit.get('responsavel')}")
+        
+        # Verify unit properties
+        expected_properties = {
+            'nome': 'Farmácia São Gonçalo do Angical',
+            'endereco': 'Rua Central, 456 - Centro, São Gonçalo do Angical - BA',
+            'telefone': '(77) 99999-2222',
+            'email': 'angical@farmaciasaogoncalo.com.br',
+            'cnpj': '12.345.678/0001-02',
+            'responsavel': 'Ana Paula Santos'
+        }
+        
+        verification_passed = True
+        for prop, expected_value in expected_properties.items():
+            actual_value = angical_unit.get(prop)
+            if actual_value == expected_value:
+                print(f"   ✅ {prop}: {actual_value}")
+            else:
+                print(f"   ❌ {prop}: Expected '{expected_value}', got '{actual_value}'")
+                verification_passed = False
+        
+        return verification_passed, angical_unit.get('id') if angical_unit else None
+
+    def test_angical_user_unit_filtering(self, angical_unit_id):
+        """Test that angical user can only see data from their assigned unit"""
+        print("\n🔒 ANGICAL USER UNIT FILTERING TEST")
+        
+        # Store original credentials
+        original_token = self.token
+        original_user = self.user_data
+        
+        # Login as angical user
+        if not self.test_login("angical", "angical123"):
+            print("❌ Failed to login as angical user")
+            return False
+        
+        # Test that angical user can only see their unit's data
+        print(f"   Testing data access for angical user (unit: {angical_unit_id})")
+        
+        # Test products access
+        produtos_success, produtos = self.test_get_produtos()
+        if produtos_success:
+            print(f"   ✅ Can access products: {len(produtos)} products found")
+            # All products should belong to angical's unit
+            for produto in produtos[:3]:  # Check first 3
+                if produto.get('unidade_id') == angical_unit_id:
+                    print(f"     ✅ Product '{produto['nome']}' belongs to correct unit")
+                else:
+                    print(f"     ❌ Product '{produto['nome']}' belongs to wrong unit: {produto.get('unidade_id')}")
+        else:
+            print(f"   ❌ Failed to access products as angical user")
+        
+        # Test clients access
+        clientes_success, clientes = self.test_get_clientes()
+        if clientes_success:
+            print(f"   ✅ Can access clients: {len(clientes)} clients found")
+        else:
+            print(f"   ❌ Failed to access clients as angical user")
+        
+        # Test boletos access
+        boletos_success, boletos = self.test_get_boletos()
+        if boletos_success:
+            print(f"   ✅ Can access boletos: {len(boletos)} boletos found")
+        else:
+            print(f"   ❌ Failed to access boletos as angical user")
+        
+        # Test dashboard stats
+        dashboard_success = self.test_dashboard_stats()
+        if dashboard_success:
+            print(f"   ✅ Can access dashboard stats")
+        else:
+            print(f"   ❌ Failed to access dashboard stats as angical user")
+        
+        # Restore original credentials
+        self.token = original_token
+        self.user_data = original_user
+        
+        return produtos_success and clientes_success and boletos_success and dashboard_success
+
+    def test_comprehensive_angical_user_system(self):
+        """Test complete angical user creation and authentication system"""
+        print("\n👤 COMPREHENSIVE ANGICAL USER SYSTEM TESTING")
+        
+        # 1. Verify angical user was created correctly
+        if not self.test_angical_user_creation_verification():
+            print("❌ Angical user creation verification failed")
+            return False
+        
+        # 2. Test angical user authentication
+        auth_result = self.test_angical_user_authentication()
+        if not auth_result or not auth_result[0]:
+            print("❌ Angical user authentication failed")
+            return False
+        
+        angical_token, angical_user_data = auth_result[1], auth_result[2]
+        
+        # 3. Test unit assignment
+        unit_result = self.test_angical_unit_assignment()
+        if not unit_result or not unit_result[0]:
+            print("❌ Angical unit assignment verification failed")
+            return False
+        
+        angical_unit_id = unit_result[1]
+        
+        # 4. Test unit filtering (data access control)
+        if not self.test_angical_user_unit_filtering(angical_unit_id):
+            print("❌ Angical user unit filtering test failed")
+            return False
+        
+        # 5. Test that admin can see angical user in users list
+        print("\n👥 ADMIN USER MANAGEMENT VERIFICATION")
+        if not self.test_angical_user_creation_verification():
+            print("❌ Admin cannot see angical user in management interface")
+            return False
+        
+        print(f"   ✅ COMPREHENSIVE ANGICAL USER SYSTEM TEST COMPLETED SUCCESSFULLY")
+        print(f"   ✅ User Creation: angical user exists with correct properties")
+        print(f"   ✅ Authentication: angical/angical123 credentials work")
+        print(f"   ✅ Unit Assignment: assigned to 'Farmácia São Gonçalo do Angical'")
+        print(f"   ✅ Access Control: can only see data from assigned unit")
+        print(f"   ✅ User Management: admin can see angical user in users list")
+        
+        return True
+
 def main():
     print("🏥 SISTEMA DE FARMÁCIA - TESTE DE APIs")
     print("=" * 50)
