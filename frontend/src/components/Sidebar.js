@@ -26,6 +26,7 @@ const Sidebar = ({ user, onLogout }) => {
     { path: "/", icon: LayoutDashboard, label: "Dashboard" },
     { path: "/pdv", icon: ShoppingCart, label: "PDV (Vendas)" },
     { path: "/produtos", icon: Package, label: "Produtos" },
+    { path: "/entrada-mercadorias", icon: PackagePlus, label: "Entrada de Mercadorias" },
     { path: "/clientes", icon: Users, label: "Clientes" },
     { path: "/promocoes", icon: Percent, label: "Promoções" },
     { path: "/relatorios", icon: BarChart3, label: "Relatórios" },
