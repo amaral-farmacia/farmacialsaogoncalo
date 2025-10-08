@@ -159,6 +159,34 @@ class PagamentoBoleto(BaseModel):
     data_pagamento: str
     valor_pago: float
 
+class EntradaMercadoria(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    produto_id: str
+    quantidade: int
+    preco_custo: float
+    preco_venda: float
+    data_validade: str = ""
+    lote: str = ""
+    fornecedor: str = ""
+    localizacao: str = ""
+    valor_total_custo: float = 0.0
+    valor_total_venda: float = 0.0
+    lucro_unitario: float = 0.0
+    margem_lucro: float = 0.0
+    usuario_id: str
+    unidade_id: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class EntradaMercadoriaCreate(BaseModel):
+    produto_id: str
+    quantidade: int
+    preco_custo: float
+    preco_venda: float
+    data_validade: str = ""
+    lote: str = ""
+    fornecedor: str = ""
+    localizacao: str = ""
+
 # Utility functions
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
