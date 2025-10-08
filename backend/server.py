@@ -226,6 +226,43 @@ class NotaFiscalCreate(BaseModel):
     produtos: list = []
     observacoes: str = ""
 
+class Unidade(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    nome: str
+    endereco: str
+    telefone: str
+    email: str = ""
+    cnpj: str = ""
+    responsavel: str = ""
+    ativa: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class UnidadeCreate(BaseModel):
+    nome: str
+    endereco: str
+    telefone: str
+    email: str = ""
+    cnpj: str = ""
+    responsavel: str = ""
+    ativa: bool = True
+
+class TransferenciaProduto(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    produto_id: str
+    unidade_origem_id: str
+    unidade_destino_id: str
+    quantidade: int
+    status: str = "pendente"  # pendente, em_transito, confirmada, cancelada
+    observacoes: str = ""
+    usuario_id: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class TransferenciaCreate(BaseModel):
+    produto_id: str
+    unidade_destino_id: str
+    quantidade: int
+    observacoes: str = ""
+
 # Utility functions
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
