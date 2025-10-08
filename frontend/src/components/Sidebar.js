@@ -28,6 +28,7 @@ const Sidebar = ({ user, onLogout }) => {
     { path: "/pdv", icon: ShoppingCart, label: "PDV (Vendas)" },
     { path: "/produtos", icon: Package, label: "Produtos" },
     { path: "/entrada-mercadorias", icon: PackagePlus, label: "Entrada de Mercadorias" },
+    { path: "/transferencias", icon: ArrowRightLeft, label: "Transferências" },
     { path: "/clientes", icon: Users, label: "Clientes" },
     { path: "/promocoes", icon: Percent, label: "Promoções" },
     ...(user.role === 'admin' ? [
