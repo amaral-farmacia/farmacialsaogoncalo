@@ -84,7 +84,7 @@ const Multiunidade = ({ user }) => {
     
     try {
       await axios.post('/unidades', formData);
-      toast.success('Unidade criada com sucesso');
+      toast.success('Unidade cadastrada com sucesso');
       
       setFormData({
         nome: "",
