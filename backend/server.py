@@ -1688,6 +1688,226 @@ async def confirmar_transferencia(transferencia_id: str, current_user: UserBase 
     
     return {"message": "Transferência confirmada com sucesso"}
 
+@api_router.put("/transferencias/{transferencia_id}/receber")
+async def receber_transferencia(transferencia_id: str, current_user: UserBase = Depends(get_current_user)):
+    """Confirma o recebimento de uma transferência na unidade destino"""
+    transferencia = await db.transferencias.find_one({"id": transferencia_id})
+    if not transferencia:
+        raise HTTPException(status_code=404, detail="Transferência não encontrada")
+    
+    # Verificar se o usuário é da unidade destino
+    if transferencia["unidade_destino_id"] != current_user.unidade_id:
+        raise HTTPException(status_code=403, detail="Você só pode receber transferências destinadas à sua unidade")
+    
+    if transferencia["status"] != "confirmada":
+        raise HTTPException(status_code=400, detail="Transferência não está confirmada para recebimento")
+    
+    # Atualizar status
+    await db.transferencias.update_one(
+        {"id": transferencia_id},
+        {"$set": {"status": "recebida"}}
+    )
+    
+    # Adicionar produto ao estoque da unidade destino
+    produto_origem = await db.produtos.find_one({"id": transferencia["produto_id"]})
+    if not produto_origem:
+        raise HTTPException(status_code=404, detail="Produto origem não encontrado")
+    
+    # Verificar se produto já existe na unidade destino
+    produto_destino = await db.produtos.find_one({
+        "codigo_barras": produto_origem["codigo_barras"],
+        "unidade_id": current_user.unidade_id
+    })
+    
+    if produto_destino:
+        # Incrementar quantidade existente
+        await db.produtos.update_one(
+            {"id": produto_destino["id"]},
+            {"$inc": {"quantidade": transferencia["quantidade"]}}
+        )
+    else:
+        # Criar novo produto na unidade destino
+        novo_produto = produto_origem.copy()
+        novo_produto["id"] = str(uuid.uuid4())
+        novo_produto["quantidade"] = transferencia["quantidade"]
+        novo_produto["unidade_id"] = current_user.unidade_id
+        novo_produto["created_at"] = datetime.now(timezone.utc)
+        
+        await db.produtos.insert_one(novo_produto)
+    
+    return {"message": "Transferência recebida com sucesso"}
+
+@api_router.get("/dashboard/unidades")
+async def get_dashboard_unidades(current_user: UserBase = Depends(get_current_user)):
+    """Dashboard com dados por unidade (apenas para admin)"""
+    if current_user.role != 'admin':
+        raise HTTPException(status_code=403, detail="Apenas administradores podem acessar estes dados")
+    
+    unidades = await db.unidades.find().to_list(1000)
+    resultado = []
+    
+    for unidade in unidades:
+        # Estatísticas da unidade
+        total_produtos = await db.produtos.count_documents({"unidade_id": unidade["id"]})
+        total_clientes = await db.clientes.count_documents({"unidade_id": unidade["id"]})
+        
+        # Vendas do mês atual
+        start_month = datetime.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        vendas = await db.vendas.find({
+            "unidade_id": unidade["id"],
+            "created_at": {"$gte": start_month}
+        }).to_list(1000)
+        
+        vendas_mes = sum(venda.get("total", 0) for venda in vendas)
+        total_vendas_mes = len(vendas)
+        
+        # Produtos em estoque baixo
+        produtos_estoque_baixo = await db.produtos.find({
+            "unidade_id": unidade["id"],
+            "$expr": {"$lte": ["$quantidade", "$estoque_minimo"]}
+        }).to_list(1000)
+        
+        # Transferências pendentes (enviadas e recebidas)
+        transferencias_enviadas = await db.transferencias.count_documents({
+            "unidade_origem_id": unidade["id"],
+            "status": {"$in": ["pendente", "confirmada"]}
+        })
+        
+        transferencias_recebidas = await db.transferencias.count_documents({
+            "unidade_destino_id": unidade["id"],
+            "status": {"$in": ["confirmada", "recebida"]}
+        })
+        
+        unidade_data = {
+            "id": unidade["id"],
+            "nome": unidade["nome"],
+            "endereco": unidade["endereco"],
+            "responsavel": unidade.get("responsavel", ""),
+            "telefone": unidade["telefone"],
+            "ativa": unidade.get("ativa", True),
+            "estatisticas": {
+                "total_produtos": total_produtos,
+                "total_clientes": total_clientes,
+                "vendas_mes": vendas_mes,
+                "total_vendas_mes": total_vendas_mes,
+                "produtos_estoque_baixo": len(produtos_estoque_baixo),
+                "transferencias_enviadas": transferencias_enviadas,
+                "transferencias_recebidas": transferencias_recebidas
+            }
+        }
+        resultado.append(unidade_data)
+    
+    return resultado
+
+@api_router.get("/relatorios/unidade/{unidade_id}")
+async def get_relatorio_unidade(
+    unidade_id: str,
+    data_inicio: str = None,
+    data_fim: str = None,
+    current_user: UserBase = Depends(get_current_user)
+):
+    """Relatório detalhado de uma unidade específica"""
+    if current_user.role != 'admin':
+        raise HTTPException(status_code=403, detail="Apenas administradores podem acessar relatórios de unidades")
+    
+    # Verificar se unidade existe
+    unidade = await db.unidades.find_one({"id": unidade_id})
+    if not unidade:
+        raise HTTPException(status_code=404, detail="Unidade não encontrada")
+    
+    # Filtros de data
+    filtro_data = {}
+    if data_inicio and data_fim:
+        try:
+            start_date = datetime.fromisoformat(data_inicio.replace('Z', '+00:00'))
+            end_date = datetime.fromisoformat(data_fim.replace('Z', '+00:00'))
+            filtro_data = {
+                "created_at": {
+                    "$gte": start_date,
+                    "$lte": end_date
+                }
+            }
+        except:
+            pass
+    
+    # Dados da unidade
+    produtos = await db.produtos.find({"unidade_id": unidade_id}).to_list(1000)
+    clientes = await db.clientes.find({"unidade_id": unidade_id}).to_list(1000)
+    
+    # Vendas do período
+    filtro_vendas = {"unidade_id": unidade_id}
+    filtro_vendas.update(filtro_data)
+    vendas = await db.vendas.find(filtro_vendas).to_list(1000)
+    
+    # Transferências do período
+    filtro_transferencias = {
+        "$or": [
+            {"unidade_origem_id": unidade_id},
+            {"unidade_destino_id": unidade_id}
+        ]
+    }
+    filtro_transferencias.update(filtro_data)
+    transferencias = await db.transferencias.find(filtro_transferencias).to_list(1000)
+    
+    # Calcular métricas
+    total_vendas = sum(venda.get("total", 0) for venda in vendas)
+    vendas_por_metodo = {}
+    for venda in vendas:
+        metodo = venda.get("metodo_pagamento", "outros")
+        vendas_por_metodo[metodo] = vendas_por_metodo.get(metodo, 0) + venda.get("total", 0)
+    
+    # Top produtos vendidos
+    produtos_vendidos = {}
+    for venda in vendas:
+        for item in venda.get("items", []):
+            produto_id = item.get("produto_id")
+            quantidade = item.get("quantidade", 0)
+            produtos_vendidos[produto_id] = produtos_vendidos.get(produto_id, 0) + quantidade
+    
+    top_produtos = []
+    for produto_id, quantidade in sorted(produtos_vendidos.items(), key=lambda x: x[1], reverse=True)[:5]:
+        produto = await db.produtos.find_one({"id": produto_id})
+        if produto:
+            top_produtos.append({
+                "nome": produto["nome"],
+                "quantidade_vendida": quantidade,
+                "estoque_atual": produto["quantidade"]
+            })
+    
+    return {
+        "unidade": {
+            "id": unidade["id"],
+            "nome": unidade["nome"],
+            "endereco": unidade["endereco"],
+            "responsavel": unidade.get("responsavel", "")
+        },
+        "periodo": {
+            "data_inicio": data_inicio,
+            "data_fim": data_fim
+        },
+        "resumo": {
+            "total_produtos": len(produtos),
+            "total_clientes": len(clientes),
+            "total_vendas": len(vendas),
+            "valor_vendas": total_vendas,
+            "total_transferencias": len(transferencias)
+        },
+        "vendas_por_metodo": vendas_por_metodo,
+        "top_produtos": top_produtos,
+        "produtos_estoque_baixo": [
+            {
+                "nome": p["nome"],
+                "quantidade": p["quantidade"],
+                "estoque_minimo": p["estoque_minimo"]
+            }
+            for p in produtos if p["quantidade"] <= p.get("estoque_minimo", 10)
+        ],
+        "transferencias_resumo": {
+            "enviadas": len([t for t in transferencias if t["unidade_origem_id"] == unidade_id]),
+            "recebidas": len([t for t in transferencias if t["unidade_destino_id"] == unidade_id])
+        }
+    }
+
 # Include the router in the main app
 app.include_router(api_router)
 
