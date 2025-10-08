@@ -242,8 +242,8 @@ const Multiunidade = ({ user }) => {
               </div>
               
               <div className="flex gap-3 pt-4">
-                <Button type="submit" className="flex-1 bg-indigo-600 hover:bg-indigo-700">
-                  Criar Unidade
+                <Button type="submit" className="flex-1 bg-green-600 hover:bg-green-700">
+                  Cadastrar Unidade
                 </Button>
                 <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                   Cancelar
