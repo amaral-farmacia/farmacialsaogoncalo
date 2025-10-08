@@ -401,6 +401,17 @@ const TransferenciaProdutos = ({ user }) => {
                   </Button>
                 )}
                 
+                {transferencia.status === 'confirmada' && transferencia.unidade_destino_id === user.unidade_id && (
+                  <Button
+                    onClick={() => receberTransferencia(transferencia.id)}
+                    size="sm"
+                    className="flex-1 bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Package className="mr-2 h-4 w-4" />
+                    Receber
+                  </Button>
+                )}
+                
                 <Button
                   variant="outline"
                   size="sm"
