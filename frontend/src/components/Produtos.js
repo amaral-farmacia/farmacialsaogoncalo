@@ -101,6 +101,7 @@ const Produtos = ({ user }) => {
       codigo_barras: produto.codigo_barras,
       validade: produto.validade,
       preco: produto.preco.toString(),
+      preco_custo: (produto.preco_custo || 0).toString(),
       quantidade: produto.quantidade.toString(),
       estoque_minimo: (produto.estoque_minimo || 10).toString(),
       localizacao: produto.localizacao
