@@ -17,7 +17,8 @@ import {
   TrendingUp,
   Eye,
   Settings,
-  BarChart3
+  BarChart3,
+  Phone
 } from "lucide-react";
 import { toast } from "sonner";
 
