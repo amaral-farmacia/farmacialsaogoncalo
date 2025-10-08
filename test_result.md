@@ -111,11 +111,14 @@ backend:
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "All boletos routes implemented: GET /boletos (list with auto-status update), POST /boletos (create), PUT /boletos/{id}/pagar (mark as paid). Sample data created in init_db()"
+      - working: true
+        agent: "testing"
+        comment: "✅ COMPREHENSIVE TESTING COMPLETED: All CRUD operations working perfectly. GET /api/boletos correctly lists boletos with automatic status updates (pendente->vencido based on date). POST /api/boletos successfully creates new boletos with all fields. PUT /api/boletos/{id}/pagar correctly marks boletos as paid with payment date. Status logic working: past due dates auto-update to 'vencido', future dates remain 'pendente'. Payment workflow verified: status changes to 'pago' and data_pagamento is recorded. Edge cases tested: invalid IDs return 404, missing fields return 422 validation errors. 100% success rate on boletos API tests."
 
   - task: "Dashboard Stats API with Boletos"
     implemented: true
@@ -123,11 +126,14 @@ backend:
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "Dashboard stats endpoint already includes boletos data: boletos_vencidos, boletos_vencidos_detalhes, boletos_a_pagar, boletos_a_pagar_valor"
+      - working: true
+        agent: "testing"
+        comment: "✅ DASHBOARD INTEGRATION VERIFIED: GET /api/dashboard/stats correctly includes all required boletos data: boletos_vencidos (count), boletos_vencidos_detalhes (array with supplier, value, due date), boletos_a_pagar (count), boletos_a_pagar_valor (total amount). All fields present and correctly calculated. Dashboard properly integrates with boletos system for financial overview."
 
 frontend:
   - task: "Boletos Component"
