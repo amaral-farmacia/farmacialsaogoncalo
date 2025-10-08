@@ -39,7 +39,10 @@ const Multiunidade = ({ user }) => {
     nome: "",
     endereco: "",
     telefone: "",
-    responsavel: ""
+    email: "",
+    cnpj: "",
+    responsavel: "",
+    ativa: true
   });
 
   useEffect(() => {
