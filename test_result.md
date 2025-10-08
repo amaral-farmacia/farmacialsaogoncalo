@@ -390,3 +390,15 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ COMPREHENSIVE ANGICAL USER SYSTEM TESTING COMPLETED SUCCESSFULLY: User Creation verified - angical user exists in database with correct properties (username: angical, full_name: Colaborador Angical, role: colaborador). Authentication working perfectly - angical/angical123 credentials successfully authenticate and return valid JWT token. Unit Assignment verified - user correctly assigned to 'Farmácia São Gonçalo do Angical' unit with proper unit ID, address, phone, email, CNPJ, and responsible person. Access Control working - angical user can access protected endpoints (/auth/me, /produtos, /clientes, /boletos, /dashboard/stats) and data is properly filtered by unit (0 products, 0 clients, 0 boletos for new unit as expected). User Management verified - admin can see angical user in users list via GET /api/usuarios. All authentication flows, unit filtering, and access control mechanisms working correctly. Fixed database initialization issue and user endpoint filtering to show all users for admin. 100% success rate on angical user system tests."
+
+  - task: "Angical Unit Data Verification and Cleanup"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ ANGICAL UNIT DATA VERIFICATION AND CLEANUP COMPLETED SUCCESSFULLY: Unit Count Verification passed - GET /api/unidades returns exactly 2 units (cleanup successful). Angical Unit Data verified - unit has correct data: nome='Farmácia São Gonçalo Angical', endereco='Angical - BA', telefone='77999178367', email='amaralfarmacias@gmail.com', responsavel='Arquimedes Oliveira do Amaral'. Dashboard Units verified - GET /api/dashboard/unidades returns 2 units maximum with correct data structure. User-Unit Assignment verified - admin user assigned to main unit, angical user assigned to Angical unit. Authentication and Access verified - both users can login and access their respective data (admin/admin123 and angical/angical123). Database cleanup successful - removed duplicate units and users, maintaining only the required 2 units and 2 users. All requirements met: exactly 2 units exist, Angical unit has correct contact information, unit cleanup removed duplicates, user assignments correct, authentication working. 100% success rate (10/10 tests passed)."
