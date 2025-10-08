@@ -110,6 +110,7 @@ function App() {
                 {user.role === 'admin' && (
                   <>
                     <Route path="/relatorios" element={<Relatorios user={user} />} />
+                    <Route path="/dashboard-unidades" element={<DashboardUnidades user={user} />} />
                     <Route path="/usuarios" element={<Usuarios user={user} />} />
                     <Route path="/notas-fiscais" element={<NotasFiscais user={user} />} />
                   </>
