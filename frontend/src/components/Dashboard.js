@@ -604,6 +604,144 @@ const Dashboard = ({ user }) => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Modal de Boletos Vencidos */}
+      <Dialog open={showBoletosVencidos} onOpenChange={setShowBoletosVencidos}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-800">
+              <AlertTriangle className="h-5 w-5" />
+              Boletos Vencidos
+            </DialogTitle>
+            <DialogDescription>
+              Boletos que já passaram da data de vencimento
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="max-h-96 overflow-y-auto">
+            {dashboardData.stats.boletos_vencidos_detalhes.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <DollarSign className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                <p>Nenhum boleto vencido</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {dashboardData.stats.boletos_vencidos_detalhes.map((boleto) => (
+                  <div key={boleto.id} className="p-4 border border-red-200 rounded-lg bg-red-50">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-gray-900 mb-1">{boleto.fornecedor}</h3>
+                        <p className="text-sm text-red-700">
+                          Vencimento: {new Date(boleto.data_vencimento).toLocaleDateString('pt-BR')}
+                        </p>
+                      </div>
+                      <Badge className="bg-red-100 text-red-800">
+                        Vencido
+                      </Badge>
+                    </div>
+                    
+                    <div className="text-center bg-red-100 p-3 rounded-lg">
+                      <span className="text-sm text-red-700">Valor:</span>
+                      <div className="font-bold text-red-800 text-lg">
+                        {formatCurrency(boleto.valor)}
+                      </div>
+                    </div>
+                    
+                    <div className="flex justify-end mt-3">
+                      <Button
+                        size="sm"
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                        onClick={() => {
+                          setShowBoletosVencidos(false);
+                          window.location.href = '/boletos';
+                        }}
+                      >
+                        Ir para Boletos
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          
+          <div className="flex justify-between pt-4">
+            <div className="text-sm text-gray-600">
+              Total vencido: <span className="font-semibold text-red-600">
+                {formatCurrency(dashboardData.stats.boletos_vencidos_detalhes.reduce((acc, boleto) => acc + boleto.valor, 0))}
+              </span>
+            </div>
+            <Button 
+              onClick={() => setShowBoletosVencidos(false)}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Fechar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Boletos A Pagar */}
+      <Dialog open={showBoletosAPagar} onOpenChange={setShowBoletosAPagar}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-orange-800">
+              <Clock className="h-5 w-5" />
+              Boletos A Pagar
+            </DialogTitle>
+            <DialogDescription>
+              Boletos pendentes dentro do prazo de vencimento
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="max-h-96 overflow-y-auto">
+            {!dashboardData.stats.boletos_a_pagar || dashboardData.stats.boletos_a_pagar === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <Clock className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                <p>Nenhum boleto a pagar</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="p-4 border border-orange-200 rounded-lg bg-orange-50">
+                  <div className="text-center">
+                    <h3 className="font-semibold text-gray-900 mb-2">Resumo de Pagamentos</h3>
+                    <div className="bg-orange-100 p-3 rounded-lg">
+                      <div className="text-sm text-orange-700">Total a pagar:</div>
+                      <div className="font-bold text-orange-800 text-xl">
+                        {formatCurrency(dashboardData.stats.boletos_a_pagar_valor)}
+                      </div>
+                      <div className="text-sm text-orange-600 mt-1">
+                        {dashboardData.stats.boletos_a_pagar} boleto(s) pendente(s)
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-center mt-4">
+                    <Button
+                      className="bg-orange-600 hover:bg-orange-700 text-white"
+                      onClick={() => {
+                        setShowBoletosAPagar(false);
+                        window.location.href = '/boletos';
+                      }}
+                    >
+                      Ver Todos os Boletos
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          <div className="flex justify-end pt-4">
+            <Button 
+              onClick={() => setShowBoletosAPagar(false)}
+              className="bg-orange-600 hover:bg-orange-700"
+            >
+              Fechar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
