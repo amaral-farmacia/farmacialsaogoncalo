@@ -12,6 +12,7 @@ import {
   Users, 
   AlertTriangle,
   TrendingUp,
+  TrendingDown,
   Calendar,
   Clock
 } from "lucide-react";
