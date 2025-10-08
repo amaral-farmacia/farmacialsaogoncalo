@@ -560,21 +560,6 @@ async def init_db():
         
         await db.notas_fiscais.insert_many(notas_fiscais)
         
-        # Create segunda unidade - São Gonçalo do Angical
-        unidade_angical_id = str(uuid.uuid4())
-        
-        # Add user for segunda unidade ANTES da inserção
-        user_angical = {
-            "id": str(uuid.uuid4()),
-            "username": "angical",
-            "password_hash": hash_password("angical123"),
-            "full_name": "Colaborador Angical",
-            "role": "colaborador",
-            "unidade_id": unidade_angical_id,
-            "created_at": datetime.now(timezone.utc)
-        }
-        users.append(user_angical)
-        
         unidades_extras = [
             {
                 "id": unidade_angical_id,
