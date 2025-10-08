@@ -120,6 +120,66 @@ const Boletos = ({ user }) => {
     }
   };
 
+  const abrirEdicao = (boleto) => {
+    setBoletoSelecionado(boleto);
+    setFormData({
+      fornecedor: boleto.fornecedor,
+      valor: boleto.valor.toString(),
+      data_vencimento: boleto.data_vencimento,
+      descricao: boleto.descricao,
+      categoria: boleto.categoria,
+      numero_boleto: boleto.numero_boleto,
+      codigo_barras: boleto.codigo_barras || ""
+    });
+    setEditDialogOpen(true);
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    
+    try {
+      const boletoData = {
+        ...formData,
+        valor: parseFloat(formData.valor)
+      };
+      
+      await axios.put(`/boletos/${boletoSelecionado.id}`, boletoData);
+      toast.success('Boleto atualizado com sucesso');
+      
+      setEditDialogOpen(false);
+      setBoletoSelecionado(null);
+      setFormData({
+        fornecedor: "",
+        valor: "",
+        data_vencimento: "",
+        descricao: "",
+        categoria: "medicamentos",
+        numero_boleto: "",
+        codigo_barras: ""
+      });
+      fetchBoletos();
+    } catch (error) {
+      toast.error('Erro ao atualizar boleto');
+    }
+  };
+
+  const confirmarDelete = (boleto) => {
+    setBoletoSelecionado(boleto);
+    setDeleteDialogOpen(true);
+  };
+
+  const deletarBoleto = async () => {
+    try {
+      await axios.delete(`/boletos/${boletoSelecionado.id}`);
+      toast.success('Boleto deletado com sucesso');
+      setDeleteDialogOpen(false);
+      setBoletoSelecionado(null);
+      fetchBoletos();
+    } catch (error) {
+      toast.error('Erro ao deletar boleto');
+    }
+  };
+
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
