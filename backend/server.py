@@ -560,7 +560,19 @@ async def init_db():
         
         await db.notas_fiscais.insert_many(notas_fiscais)
         
-        unidades_extras = [
+        # Create unidades (main unit and angical unit)
+        unidades = [
+            {
+                "id": unidade_id,
+                "nome": "Farmácia Central",
+                "endereco": "Rua Principal, 123 - Centro",
+                "telefone": "(11) 99999-1111",
+                "email": "central@farmacia.com.br",
+                "cnpj": "12.345.678/0001-01",
+                "responsavel": "Administrador",
+                "ativa": True,
+                "created_at": datetime.now(timezone.utc)
+            },
             {
                 "id": unidade_angical_id,
                 "nome": "Farmácia São Gonçalo do Angical",
@@ -574,7 +586,7 @@ async def init_db():
             }
         ]
         
-        await db.unidades.insert_many(unidades_extras)
+        await db.unidades.insert_many(unidades)
         
         # Create sample transferências
         transferencias = [
