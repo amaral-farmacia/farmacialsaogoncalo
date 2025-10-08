@@ -1583,8 +1583,15 @@ async def get_dashboard_consolidado(current_user: UserBase = Depends(get_current
 # Transferências routes
 @api_router.get("/transferencias")
 async def get_transferencias(current_user: UserBase = Depends(get_current_user)):
-    """Lista transferências"""
-    transferencias = await db.transferencias.find().to_list(1000)
+    """Lista transferências relacionadas à unidade do usuário"""
+    # Mostrar transferências onde a unidade é origem ou destino
+    filtro = {
+        "$or": [
+            {"unidade_origem_id": current_user.unidade_id},
+            {"unidade_destino_id": current_user.unidade_id}
+        ]
+    }
+    transferencias = await db.transferencias.find(filtro).to_list(1000)
     result = []
     
     for transferencia in transferencias:
