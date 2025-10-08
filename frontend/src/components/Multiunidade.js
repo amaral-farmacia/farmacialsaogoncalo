@@ -172,7 +172,7 @@ const Multiunidade = ({ user }) => {
         
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-indigo-600 hover:bg-indigo-700 shadow-lg">
+            <Button className="bg-green-600 hover:bg-green-700 shadow-lg">
               <Plus className="mr-2 h-4 w-4" />
               Nova Unidade
             </Button>
