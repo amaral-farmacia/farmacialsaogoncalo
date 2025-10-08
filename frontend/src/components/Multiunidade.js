@@ -466,15 +466,21 @@ const Multiunidade = ({ user }) => {
       {unidades.length === 0 && !loading && (
         <div className="text-center py-12">
           <Building2 className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Nenhuma unidade cadastrada</h3>
-          <p className="text-gray-600 mb-6">Crie a primeira unidade para começar</p>
-          <Button 
-            onClick={() => setDialogOpen(true)}
-            className="bg-indigo-600 hover:bg-indigo-700"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Criar Primeira Unidade
-          </Button>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            Nenhuma unidade cadastrada
+          </h3>
+          <p className="text-gray-600 mb-6">
+            {user.role === 'admin' ? 'Cadastre a primeira unidade para começar' : 'Aguarde o administrador configurar as unidades'}
+          </p>
+          {user.role === 'admin' && (
+            <Button 
+              onClick={() => setDialogOpen(true)}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Nova Unidade
+            </Button>
+          )}
         </div>
       )}
     </div>
