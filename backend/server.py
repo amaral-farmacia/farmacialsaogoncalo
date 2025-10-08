@@ -326,12 +326,12 @@ async def init_db():
         # Create angical unit
         angical_unit = {
             "id": unidade_angical_id,
-            "nome": "Farmácia São Gonçalo do Angical",
-            "endereco": "Rua Central, 456 - Centro, São Gonçalo do Angical - BA",
-            "telefone": "(77) 99999-2222",
-            "email": "angical@farmaciasaogoncalo.com.br",
+            "nome": "Farmácia São Gonçalo Angical",
+            "endereco": "Angical - BA",
+            "telefone": "77999178367",
+            "email": "amaralfarmacias@gmail.com",
             "cnpj": "12.345.678/0001-02",
-            "responsavel": "Ana Paula Santos",
+            "responsavel": "Arquimedes Oliveira do Amaral",
             "ativa": True,
             "created_at": datetime.now(timezone.utc)
         }
