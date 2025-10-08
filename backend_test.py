@@ -591,7 +591,7 @@ class FarmaciaAPITester:
             404
         )
         
-        if not success:  # We expect this to fail with 404
+        if success:  # We expect this to succeed with 404 status
             print(f"   ✅ Invalid boleto ID correctly rejected with 404")
             return True
         else:
