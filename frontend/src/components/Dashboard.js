@@ -72,6 +72,9 @@ const Dashboard = ({ user }) => {
         }
       });
       
+      // Fetch fechamento de caixa de hoje
+      const fechamentoResponse = await axios.get(`/caixa/fechamento/${hoje}`);
+      
       setDashboardData({
         produtosVencendo: produtosResponse.data,
         fiadosAtrasados: fiadosResponse.data.filter(f => f.status !== 'pago'),
@@ -79,6 +82,7 @@ const Dashboard = ({ user }) => {
       });
       
       setVendasPeriodo(vendasResponse.data);
+      setFechamentoCaixa(fechamentoResponse.data);
       
     } catch (error) {
       console.error('Erro detalhado:', error);
