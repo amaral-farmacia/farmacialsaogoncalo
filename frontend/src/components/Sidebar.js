@@ -23,13 +23,17 @@ const Sidebar = ({ user, onLogout }) => {
   const location = useLocation();
 
   const menuItems = [
-    { path: "/", icon: LayoutDashboard, label: "Dashboard" },
+    ...(user.role === 'admin' ? [
+      { path: "/", icon: LayoutDashboard, label: "Dashboard" }
+    ] : []),
     { path: "/pdv", icon: ShoppingCart, label: "PDV (Vendas)" },
     { path: "/produtos", icon: Package, label: "Produtos" },
     { path: "/entrada-mercadorias", icon: PackagePlus, label: "Entrada de Mercadorias" },
     { path: "/clientes", icon: Users, label: "Clientes" },
     { path: "/promocoes", icon: Percent, label: "Promoções" },
-    { path: "/relatorios", icon: BarChart3, label: "Relatórios" },
+    ...(user.role === 'admin' ? [
+      { path: "/relatorios", icon: BarChart3, label: "Relatórios" }
+    ] : []),
     { path: "/boletos", icon: Receipt, label: "Boletos" },
     { path: "/fechamento", icon: Calculator, label: "Fechamento" },
     ...(user.role === 'admin' ? [
