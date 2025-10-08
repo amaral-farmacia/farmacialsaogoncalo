@@ -17,6 +17,7 @@ import Boletos from "./components/Boletos";
 import FechamentoCaixa from "./components/FechamentoCaixa";
 import EntradaMercadorias from "./components/EntradaMercadorias";
 import TransferenciaProdutos from "./components/TransferenciaProdutos";
+import DashboardUnidades from "./components/DashboardUnidades";
 import Sidebar from "./components/Sidebar";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
