@@ -208,6 +208,60 @@ const Dashboard = ({ user }) => {
         </Card>
       </div>
 
+      {/* Boletos Cards */}
+      <div className="space-y-4">
+        <h2 className="text-xl font-semibold text-gray-900">Controle de Boletos</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card className="bg-gradient-to-br from-red-500 to-red-600 text-white border-0 shadow-lg cursor-pointer hover:scale-105 transition-transform" onClick={() => setShowBoletosVencidos(true)}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-red-100 text-sm font-medium">Boletos Vencidos</p>
+                  <p className="text-2xl font-bold">
+                    {dashboardData.stats.boletos_vencidos}
+                  </p>
+                  <p className="text-xs text-red-200 mt-1">Clique para ver</p>
+                </div>
+                <AlertTriangle className="h-8 w-8 text-red-200" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white border-0 shadow-lg cursor-pointer hover:scale-105 transition-transform" onClick={() => setShowBoletosAPagar(true)}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-orange-100 text-sm font-medium">A Pagar</p>
+                  <p className="text-2xl font-bold">
+                    {dashboardData.stats.boletos_a_pagar}
+                  </p>
+                  <p className="text-xs text-orange-200 mt-1">{formatCurrency(dashboardData.stats.boletos_a_pagar_valor)}</p>
+                </div>
+                <Clock className="h-8 w-8 text-orange-200" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0 shadow-lg">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-blue-100 text-sm font-medium">Ação Rápida</p>
+                  <Button 
+                    variant="ghost" 
+                    className="text-white hover:bg-blue-700 hover:text-white p-2 h-auto"
+                    onClick={() => window.location.href = '/boletos'}
+                  >
+                    Gerenciar Boletos
+                  </Button>
+                </div>
+                <DollarSign className="h-8 w-8 text-blue-200" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
       {/* Quick Actions */}
       <Card className="shadow-lg border-0">
         <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50 border-b">
