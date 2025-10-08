@@ -202,24 +202,24 @@ frontend:
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 1
+  test_sequence: 2
   run_ui: false
 
 test_plan:
   current_focus:
-    - "Boletos API Routes"
-    - "Dashboard Stats API with Boletos"  
+    - "NFe CRUD Operations"
+    - "NFe Special Operations"
+    - "NFe Data Structure Validation"
+    - "NFe Authentication and Access Control"
     - "Boletos Component"
     - "Dashboard Integration with Boletos"
-    - "Fechamento de Caixa Backend"
     - "Fechamento de Caixa Frontend"
     - "Dashboard Integration with Fechamento"
-    - "Entrada de Mercadorias Backend"
     - "Entrada de Mercadorias Frontend"
     - "App.js Route Integration"
     - "Sidebar Menu Integration"
   stuck_tasks: []
-  test_all: true
+  test_all: false
   test_priority: "high_first"
 
   - task: "Fechamento de Caixa Backend"
