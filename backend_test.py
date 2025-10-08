@@ -14,7 +14,8 @@ class FarmaciaAPITester:
             'produtos': [],
             'clientes': [],
             'vendas': [],
-            'boletos': []
+            'boletos': [],
+            'entradas': []
         }
 
     def run_test(self, name, method, endpoint, expected_status, data=None, headers=None):
