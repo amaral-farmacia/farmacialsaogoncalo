@@ -200,8 +200,46 @@ test_plan:
   test_all: true
   test_priority: "high_first"
 
+  - task: "Fechamento de Caixa Backend"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Rota GET /caixa/fechamento/{data} implementada. Retorna recebimentos por método de pagamento, pagamentos por fornecedor, saldo do dia, totais de vendas e boletos pagos"
+
+  - task: "Fechamento de Caixa Frontend"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/components/FechamentoCaixa.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Interface completa com cards de recebimentos e pagamentos, seletor de data, formatação de moeda, ícones por método de pagamento"
+
+  - task: "Dashboard Integration with Fechamento"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/components/Dashboard.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Adicionada seção no Dashboard com cards do fechamento de caixa do dia: Total Recebido (verde), Total Pago (vermelho), Saldo do Dia (azul/laranja), com navegação para tela detalhada"
+
 agent_communication:
   - agent: "main"
     message: "Sistema de Boletos completamente implementado: Backend com todas as rotas (listar, criar, pagar), Frontend com interface profissional completa, Dashboard integrado com cards coloridos e modais interativos. Pronto para testar funcionalidade completa do sistema."
+  - agent: "main"
+    message: "Sistema de Fechamento de Caixa completado: Backend com rota de fechamento por data, Frontend com interface detalhada, Dashboard integrado com resumo do dia atual. Pronto para testes completos dos dois sistemas."
   - agent: "testing"
     message: "✅ BOLETOS SYSTEM TESTING COMPLETED SUCCESSFULLY: Comprehensive backend testing performed with 100% success rate. All CRUD operations working perfectly: GET /api/boletos with automatic status updates, POST /api/boletos for creation, PUT /api/boletos/{id}/pagar for payments. Dashboard integration verified with all required boletos fields present. Status logic correctly implemented (pendente->vencido based on dates). Payment workflow fully functional. Edge cases handled properly (404 for invalid IDs, 422 for validation errors). Authentication working correctly. System ready for production use. Note: Sample data differs from expected (BARTOFIL instead of Cimed/Boticário/Distribuidora São Paulo) but functionality is identical and working correctly."
