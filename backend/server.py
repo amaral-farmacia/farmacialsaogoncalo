@@ -1015,6 +1015,27 @@ async def get_relatorio_entradas(
         fornecedores[fornecedor]["total_venda"] += entrada["valor_total_venda"]
         fornecedores[fornecedor]["quantidade_entradas"] += 1
     
+    # Clean entradas data to avoid ObjectId issues
+    entradas_clean = []
+    for entrada in entradas[:50]:  # Limitar a 50 para performance
+        entrada_clean = {
+            "id": entrada.get("id", str(entrada.get("_id", ""))),
+            "produto_id": entrada["produto_id"],
+            "quantidade": entrada["quantidade"],
+            "preco_custo": float(entrada["preco_custo"]),
+            "preco_venda": float(entrada["preco_venda"]),
+            "valor_total_custo": float(entrada["valor_total_custo"]),
+            "valor_total_venda": float(entrada["valor_total_venda"]),
+            "lucro_unitario": float(entrada["lucro_unitario"]),
+            "margem_lucro": float(entrada["margem_lucro"]),
+            "data_validade": entrada.get("data_validade", ""),
+            "lote": entrada.get("lote", ""),
+            "fornecedor": entrada.get("fornecedor", ""),
+            "localizacao": entrada.get("localizacao", ""),
+            "created_at": entrada.get("created_at", "")
+        }
+        entradas_clean.append(entrada_clean)
+
     return {
         "periodo": {
             "data_inicio": data_inicio,
@@ -1028,7 +1049,7 @@ async def get_relatorio_entradas(
             "margem_media": margem_media
         },
         "fornecedores": fornecedores,
-        "entradas": entradas[:50]  # Limitar a 50 para performance
+        "entradas": entradas_clean
     }
 
 # Include the router in the main app
