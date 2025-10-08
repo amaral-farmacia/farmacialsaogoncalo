@@ -1247,48 +1247,6 @@ async def create_nota_fiscal(nota_data: NotaFiscalCreate, current_user: UserBase
     
     return nota_obj
 
-@api_router.get("/notas-fiscais/{nota_id}")
-async def get_nota_fiscal(nota_id: str, current_user: UserBase = Depends(get_current_user)):
-    """Busca uma nota fiscal específica"""
-    nota = await db.notas_fiscais.find_one({"id": nota_id, "unidade_id": current_user.unidade_id})
-    
-    if not nota:
-        raise HTTPException(status_code=404, detail="Nota fiscal não encontrada")
-    
-    return {
-        "id": nota.get("id", str(nota.get("_id", ""))),
-        "numero": nota["numero"],
-        "serie": nota["serie"],
-        "fornecedor_nome": nota["fornecedor_nome"],
-        "fornecedor_cnpj": nota["fornecedor_cnpj"],
-        "data_emissao": nota["data_emissao"],
-        "data_recebimento": nota.get("data_recebimento", ""),
-        "valor_total": float(nota["valor_total"]),
-        "valor_produtos": float(nota["valor_produtos"]),
-        "valor_servicos": float(nota.get("valor_servicos", 0)),
-        "valor_desconto": float(nota.get("valor_desconto", 0)),
-        "valor_frete": float(nota.get("valor_frete", 0)),
-        "icms_total": float(nota.get("icms_total", 0)),
-        "ipi_total": float(nota.get("ipi_total", 0)),
-        "status": nota.get("status", "recebida"),
-        "produtos": nota.get("produtos", []),
-        "observacoes": nota.get("observacoes", ""),
-        "created_at": nota.get("created_at", "")
-    }
-
-@api_router.delete("/notas-fiscais/{nota_id}")
-async def delete_nota_fiscal(nota_id: str, current_user: UserBase = Depends(get_current_user)):
-    """Deleta uma nota fiscal"""
-    result = await db.notas_fiscais.delete_one({
-        "id": nota_id, 
-        "unidade_id": current_user.unidade_id
-    })
-    
-    if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Nota fiscal não encontrada")
-    
-    return {"message": "Nota fiscal deletada com sucesso"}
-
 @api_router.post("/notas-fiscais/upload-xml")
 async def upload_xml_nfe(current_user: UserBase = Depends(get_current_user)):
     """Simula o upload e processamento de XML da NFe"""
@@ -1385,6 +1343,48 @@ async def get_relatorio_nfe(
         "fornecedores": fornecedores,
         "notas": notas[:50]  # Limitar a 50 para performance
     }
+
+@api_router.get("/notas-fiscais/{nota_id}")
+async def get_nota_fiscal(nota_id: str, current_user: UserBase = Depends(get_current_user)):
+    """Busca uma nota fiscal específica"""
+    nota = await db.notas_fiscais.find_one({"id": nota_id, "unidade_id": current_user.unidade_id})
+    
+    if not nota:
+        raise HTTPException(status_code=404, detail="Nota fiscal não encontrada")
+    
+    return {
+        "id": nota.get("id", str(nota.get("_id", ""))),
+        "numero": nota["numero"],
+        "serie": nota["serie"],
+        "fornecedor_nome": nota["fornecedor_nome"],
+        "fornecedor_cnpj": nota["fornecedor_cnpj"],
+        "data_emissao": nota["data_emissao"],
+        "data_recebimento": nota.get("data_recebimento", ""),
+        "valor_total": float(nota["valor_total"]),
+        "valor_produtos": float(nota["valor_produtos"]),
+        "valor_servicos": float(nota.get("valor_servicos", 0)),
+        "valor_desconto": float(nota.get("valor_desconto", 0)),
+        "valor_frete": float(nota.get("valor_frete", 0)),
+        "icms_total": float(nota.get("icms_total", 0)),
+        "ipi_total": float(nota.get("ipi_total", 0)),
+        "status": nota.get("status", "recebida"),
+        "produtos": nota.get("produtos", []),
+        "observacoes": nota.get("observacoes", ""),
+        "created_at": nota.get("created_at", "")
+    }
+
+@api_router.delete("/notas-fiscais/{nota_id}")
+async def delete_nota_fiscal(nota_id: str, current_user: UserBase = Depends(get_current_user)):
+    """Deleta uma nota fiscal"""
+    result = await db.notas_fiscais.delete_one({
+        "id": nota_id, 
+        "unidade_id": current_user.unidade_id
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Nota fiscal não encontrada")
+    
+    return {"message": "Nota fiscal deletada com sucesso"}
 
 # Include the router in the main app
 app.include_router(api_router)
