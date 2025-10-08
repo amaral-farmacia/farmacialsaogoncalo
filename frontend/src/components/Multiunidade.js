@@ -99,7 +99,7 @@ const Multiunidade = ({ user }) => {
       fetchUnidades();
       fetchConsolidado();
     } catch (error) {
-      toast.error('Erro ao criar unidade');
+      toast.error('Erro ao cadastrar unidade');
     }
   };
 
