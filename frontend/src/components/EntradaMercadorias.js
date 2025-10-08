@@ -128,7 +128,7 @@ const EntradaMercadorias = ({ user }) => {
         valor_total_venda: quantidade * precoVenda
       };
 
-      await axios.post('/entradas-mercadorias', entradaData);
+      await axios.post('/entradas', entradaData);
       
       // Adicionar à lista local
       setEntradas([entradaData, ...entradas]);
