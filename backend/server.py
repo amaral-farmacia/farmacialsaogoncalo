@@ -544,32 +544,33 @@ async def init_db():
         
         await db.notas_fiscais.insert_many(notas_fiscais)
         
-        # Create sample unidades
-        unidade_principal_id = unidade_id  # A unidade padrão
+        # Create segunda unidade - São Gonçalo do Angical
+        unidade_angical_id = str(uuid.uuid4())
         unidades_extras = [
             {
-                "id": str(uuid.uuid4()),
-                "nome": "Farmácia São Gonçalo - Centro",
-                "endereco": "Rua Principal, 123 - Centro, São Gonçalo - RJ",
-                "telefone": "(21) 99999-1111",
-                "email": "centro@farmaciasaogoncalo.com.br",
-                "cnpj": "12.345.678/0001-01",
-                "responsavel": "Maria Silva",
-                "ativa": True,
-                "created_at": datetime.now(timezone.utc)
-            },
-            {
-                "id": str(uuid.uuid4()),
-                "nome": "Farmácia São Gonçalo - Bairro Norte",
-                "endereco": "Av. Norte, 456 - Bairro Norte, São Gonçalo - RJ", 
-                "telefone": "(21) 99999-2222",
-                "email": "norte@farmaciasaogoncalo.com.br",
+                "id": unidade_angical_id,
+                "nome": "Farmácia São Gonçalo do Angical",
+                "endereco": "Rua Central, 456 - Centro, São Gonçalo do Angical - BA",
+                "telefone": "(77) 99999-2222",
+                "email": "angical@farmaciasaogoncalo.com.br",
                 "cnpj": "12.345.678/0001-02",
-                "responsavel": "João Santos",
+                "responsavel": "Ana Paula Santos",
                 "ativa": True,
                 "created_at": datetime.now(timezone.utc)
             }
         ]
+        
+        # Add user for segunda unidade
+        user_angical = {
+            "id": str(uuid.uuid4()),
+            "username": "angical",
+            "password_hash": hash_password("angical123"),
+            "full_name": "Colaborador Angical",
+            "role": "colaborador",
+            "unidade_id": unidade_angical_id,
+            "created_at": datetime.now(timezone.utc)
+        }
+        users.append(user_angical)
         
         await db.unidades.insert_many(unidades_extras)
         
