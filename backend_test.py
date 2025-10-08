@@ -659,14 +659,23 @@ def main():
     tester.test_dashboard_produtos_validade()
     tester.test_dashboard_stats()  # New test for boletos integration
     
-    # Test 8: Login as colaborador
-    print("\n📋 FASE 8: TESTE COLABORADOR")
+    # Test 8: Fechamento de Caixa System
+    print("\n📋 FASE 8: SISTEMA DE FECHAMENTO DE CAIXA")
+    tester.test_fechamento_caixa_today()
+    tester.test_fechamento_caixa_past_date()
+    tester.test_fechamento_caixa_future_date()
+    tester.test_fechamento_caixa_invalid_date()
+    
+    # Test 9: Login as colaborador
+    print("\n📋 FASE 9: TESTE COLABORADOR")
     if tester.test_login("colab1", "123456"):
         tester.test_get_me()
         tester.test_get_produtos()
         tester.test_get_clientes()
         # Test boletos access for colaborador
         tester.test_get_boletos()
+        # Test fechamento de caixa access for colaborador
+        tester.test_fechamento_caixa_today()
     
     # Print final results
     print("\n" + "=" * 50)
