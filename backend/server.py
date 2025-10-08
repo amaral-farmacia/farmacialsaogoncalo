@@ -305,6 +305,28 @@ async def init_db():
     angical_exists = await db.users.find_one({"username": "angical"})
     print(f"Angical user exists: {angical_exists is not None}")
     
+    # Limpar unidades duplicadas - manter apenas as 2 corretas
+    if admin_exists:
+        # Contar quantas unidades existem
+        unidades_count = await db.unidades.count_documents({})
+        print(f"Current units count: {unidades_count}")
+        
+        if unidades_count > 2:
+            print("🧹 Cleaning up duplicate units...")
+            # Manter apenas as unidades dos usuários admin e angical
+            admin_user = await db.users.find_one({"username": "admin"})
+            angical_user = await db.users.find_one({"username": "angical"})
+            
+            valid_unit_ids = []
+            if admin_user:
+                valid_unit_ids.append(admin_user["unidade_id"])
+            if angical_user:
+                valid_unit_ids.append(angical_user["unidade_id"])
+            
+            # Deletar todas as outras unidades
+            result = await db.unidades.delete_many({"id": {"$nin": valid_unit_ids}})
+            print(f"Removed {result.deleted_count} duplicate units")
+    
     # If angical user doesn't exist, create it along with its unit
     if not angical_exists:
         # Create segunda unidade - São Gonçalo do Angical
