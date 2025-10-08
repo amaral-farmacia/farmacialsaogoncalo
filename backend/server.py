@@ -904,6 +904,133 @@ async def alterar_senha_usuario(user_id: str, senha_data: dict, current_user: Us
     
     return {"message": "Senha alterada com sucesso"}
 
+# Entrada de Mercadorias routes
+@api_router.get("/entradas")
+async def get_entradas_mercadorias(current_user: UserBase = Depends(get_current_user)):
+    """Lista todas as entradas de mercadorias"""
+    entradas = await db.entradas_mercadorias.find({"unidade_id": current_user.unidade_id}).to_list(1000)
+    result = []
+    for entrada in entradas:
+        # Buscar dados do produto
+        produto = await db.produtos.find_one({"id": entrada["produto_id"]})
+        
+        entrada_clean = {
+            "id": entrada.get("id", str(entrada.get("_id", ""))),
+            "produto_id": entrada["produto_id"],
+            "produto_nome": produto["nome"] if produto else "Produto não encontrado",
+            "quantidade": entrada["quantidade"],
+            "preco_custo": float(entrada["preco_custo"]),
+            "preco_venda": float(entrada["preco_venda"]),
+            "valor_total_custo": float(entrada["valor_total_custo"]),
+            "valor_total_venda": float(entrada["valor_total_venda"]),
+            "lucro_unitario": float(entrada["lucro_unitario"]),
+            "margem_lucro": float(entrada["margem_lucro"]),
+            "data_validade": entrada.get("data_validade", ""),
+            "lote": entrada.get("lote", ""),
+            "fornecedor": entrada.get("fornecedor", ""),
+            "localizacao": entrada.get("localizacao", ""),
+            "created_at": entrada.get("created_at", "")
+        }
+        result.append(entrada_clean)
+    
+    return result
+
+@api_router.post("/entradas", response_model=EntradaMercadoria)
+async def create_entrada_mercadoria(entrada_data: EntradaMercadoriaCreate, current_user: UserBase = Depends(get_current_user)):
+    """Registra uma nova entrada de mercadoria"""
+    # Calcular valores
+    valor_total_custo = entrada_data.quantidade * entrada_data.preco_custo
+    valor_total_venda = entrada_data.quantidade * entrada_data.preco_venda
+    lucro_unitario = entrada_data.preco_venda - entrada_data.preco_custo
+    margem_lucro = (lucro_unitario / entrada_data.preco_custo) * 100 if entrada_data.preco_custo > 0 else 0
+    
+    entrada_dict = entrada_data.dict()
+    entrada_dict.update({
+        "valor_total_custo": valor_total_custo,
+        "valor_total_venda": valor_total_venda,
+        "lucro_unitario": lucro_unitario,
+        "margem_lucro": margem_lucro,
+        "usuario_id": current_user.id,
+        "unidade_id": current_user.unidade_id
+    })
+    
+    entrada_obj = EntradaMercadoria(**entrada_dict)
+    await db.entradas_mercadorias.insert_one(entrada_obj.dict())
+    
+    # Atualizar o produto com os novos preços e quantidade
+    await db.produtos.update_one(
+        {"id": entrada_data.produto_id, "unidade_id": current_user.unidade_id},
+        {
+            "$inc": {"quantidade": entrada_data.quantidade},
+            "$set": {
+                "preco_custo": entrada_data.preco_custo,
+                "preco": entrada_data.preco_venda,
+                "localizacao": entrada_data.localizacao or None
+            }
+        }
+    )
+    
+    return entrada_obj
+
+@api_router.get("/entradas/relatorio")
+async def get_relatorio_entradas(
+    data_inicio: str = None,
+    data_fim: str = None,
+    current_user: UserBase = Depends(get_current_user)
+):
+    """Relatório de entradas de mercadorias por período"""
+    filtros = {"unidade_id": current_user.unidade_id}
+    
+    # Adicionar filtro de data se fornecido
+    if data_inicio and data_fim:
+        try:
+            start_date = datetime.fromisoformat(data_inicio.replace('Z', '+00:00'))
+            end_date = datetime.fromisoformat(data_fim.replace('Z', '+00:00'))
+            filtros["created_at"] = {
+                "$gte": start_date,
+                "$lte": end_date
+            }
+        except:
+            pass
+    
+    entradas = await db.entradas_mercadorias.find(filtros).to_list(1000)
+    
+    # Calcular totais
+    total_custo = sum(entrada["valor_total_custo"] for entrada in entradas)
+    total_venda = sum(entrada["valor_total_venda"] for entrada in entradas)
+    total_lucro = total_venda - total_custo
+    margem_media = (total_lucro / total_custo) * 100 if total_custo > 0 else 0
+    
+    # Agrupar por fornecedor
+    fornecedores = {}
+    for entrada in entradas:
+        fornecedor = entrada.get("fornecedor", "Não informado")
+        if fornecedor not in fornecedores:
+            fornecedores[fornecedor] = {
+                "total_custo": 0,
+                "total_venda": 0,
+                "quantidade_entradas": 0
+            }
+        fornecedores[fornecedor]["total_custo"] += entrada["valor_total_custo"]
+        fornecedores[fornecedor]["total_venda"] += entrada["valor_total_venda"]
+        fornecedores[fornecedor]["quantidade_entradas"] += 1
+    
+    return {
+        "periodo": {
+            "data_inicio": data_inicio,
+            "data_fim": data_fim
+        },
+        "totais": {
+            "total_entradas": len(entradas),
+            "total_custo": total_custo,
+            "total_venda": total_venda,
+            "total_lucro": total_lucro,
+            "margem_media": margem_media
+        },
+        "fornecedores": fornecedores,
+        "entradas": entradas[:50]  # Limitar a 50 para performance
+    }
+
 # Include the router in the main app
 app.include_router(api_router)
 
