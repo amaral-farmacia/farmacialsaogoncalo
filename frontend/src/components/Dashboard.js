@@ -27,11 +27,17 @@ const Dashboard = ({ user }) => {
       total_clientes: 0,
       produtos_estoque_baixo: 0,
       produtos_estoque_baixo_detalhes: [],
-      fiados_pendentes: 0
+      fiados_pendentes: 0,
+      boletos_vencidos: 0,
+      boletos_vencidos_detalhes: [],
+      boletos_a_pagar: 0,
+      boletos_a_pagar_valor: 0
     }
   });
   const [showEstoqueBaixo, setShowEstoqueBaixo] = useState(false);
   const [showFiadosPendentes, setShowFiadosPendentes] = useState(false);
+  const [showBoletosVencidos, setShowBoletosVencidos] = useState(false);
+  const [showBoletosAPagar, setShowBoletosAPagar] = useState(false);
   const [dateRange, setDateRange] = useState({
     inicio: new Date().toISOString().split('T')[0],
     fim: new Date().toISOString().split('T')[0]
