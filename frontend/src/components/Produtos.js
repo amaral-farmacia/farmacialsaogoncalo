@@ -70,6 +70,7 @@ const Produtos = ({ user }) => {
       const produtoData = {
         ...formData,
         preco: parseFloat(formData.preco),
+        preco_custo: parseFloat(formData.preco_custo) || 0,
         quantidade: parseInt(formData.quantidade),
         estoque_minimo: parseInt(formData.estoque_minimo)
       };
