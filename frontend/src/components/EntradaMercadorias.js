@@ -187,7 +187,8 @@ const EntradaMercadorias = ({ user }) => {
     }
 
     try {
-      await axios.post('/entradas-mercadorias/finalizar', { entradas });
+      // As entradas já são registradas individualmente, então só precisamos limpar a lista local
+      //await axios.post('/entradas/finalizar', { entradas });
       toast.success(`${entradas.length} entradas finalizadas e estoque atualizado!`);
       setEntradas([]);
       fetchProdutos();
