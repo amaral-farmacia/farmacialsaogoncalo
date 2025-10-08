@@ -105,6 +105,16 @@ const TransferenciaProdutos = ({ user }) => {
     }
   };
 
+  const receberTransferencia = async (id) => {
+    try {
+      await axios.put(`/transferencias/${id}/receber`);
+      toast.success('Transferência recebida com sucesso! Produto adicionado ao estoque.');
+      fetchData();
+    } catch (error) {
+      toast.error('Erro ao receber transferência');
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'pendente': return 'bg-yellow-100 text-yellow-800';
