@@ -426,6 +426,86 @@ async def init_db():
         ]
         
         await db.boletos.insert_many(boletos)
+        
+        # Create sample notas fiscais
+        notas_fiscais = [
+            {
+                "id": str(uuid.uuid4()),
+                "numero": "000123456",
+                "serie": "001",
+                "fornecedor_nome": "DISTRIBUIDORA EXEMPLO LTDA",
+                "fornecedor_cnpj": "12.345.678/0001-90",
+                "data_emissao": "2025-01-15",
+                "data_recebimento": "2025-01-16",
+                "valor_total": 1500.75,
+                "valor_produtos": 1350.00,
+                "valor_servicos": 0.0,
+                "valor_desconto": 25.00,
+                "valor_frete": 50.00,
+                "icms_total": 125.75,
+                "ipi_total": 0.0,
+                "status": "processada",
+                "produtos": [
+                    {
+                        "codigo": "123456",
+                        "nome": "Paracetamol 500mg",
+                        "quantidade": 100,
+                        "valor_unitario": 2.50,
+                        "valor_total": 250.00
+                    },
+                    {
+                        "codigo": "789012",
+                        "nome": "Dipirona 500mg",
+                        "quantidade": 200,
+                        "valor_unitario": 1.80,
+                        "valor_total": 360.00
+                    }
+                ],
+                "observacoes": "NFe recebida e processada automaticamente",
+                "usuario_id": users[0]["id"],
+                "unidade_id": unidade_id,
+                "created_at": datetime.now(timezone.utc)
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "numero": "000789012",
+                "serie": "001",
+                "fornecedor_nome": "FARMACEUTICA SAO PAULO LTDA",
+                "fornecedor_cnpj": "98.765.432/0001-10",
+                "data_emissao": "2025-01-10",
+                "data_recebimento": "2025-01-11",
+                "valor_total": 2350.50,
+                "valor_produtos": 2200.00,
+                "valor_servicos": 0.0,
+                "valor_desconto": 0.0,
+                "valor_frete": 150.50,
+                "icms_total": 264.00,
+                "ipi_total": 44.00,
+                "status": "processada",
+                "produtos": [
+                    {
+                        "codigo": "456789",
+                        "nome": "Ibuprofeno 600mg",
+                        "quantidade": 150,
+                        "valor_unitario": 3.20,
+                        "valor_total": 480.00
+                    },
+                    {
+                        "codigo": "321654",
+                        "nome": "Amoxicilina 500mg",
+                        "quantidade": 80,
+                        "valor_unitario": 4.50,
+                        "valor_total": 360.00
+                    }
+                ],
+                "observacoes": "Medicamentos controlados inclusos",
+                "usuario_id": users[0]["id"],
+                "unidade_id": unidade_id,
+                "created_at": datetime.now(timezone.utc)
+            }
+        ]
+        
+        await db.notas_fiscais.insert_many(notas_fiscais)
 
 # Authentication routes
 @api_router.post("/auth/login", response_model=Token)
