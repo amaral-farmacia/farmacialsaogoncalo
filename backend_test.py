@@ -504,17 +504,31 @@ def main():
     if fiados_success and fiados:
         tester.test_pagar_fiado(fiados)
     
-    # Test 6: Dashboard
-    print("\n📋 FASE 6: DASHBOARD")
+    # Test 6: Boletos System
+    print("\n📋 FASE 6: SISTEMA DE BOLETOS")
+    boletos_success, boletos = tester.test_get_boletos()
+    
+    # Test create boleto
+    boleto_success, novo_boleto = tester.test_create_boleto()
+    
+    # Test pay boleto
+    if boletos_success and boletos:
+        tester.test_pagar_boleto(boletos)
+    
+    # Test 7: Dashboard with Boletos
+    print("\n📋 FASE 7: DASHBOARD COM BOLETOS")
     tester.test_dashboard_vendas_periodo()
     tester.test_dashboard_produtos_validade()
+    tester.test_dashboard_stats()  # New test for boletos integration
     
-    # Test 7: Login as colaborador
-    print("\n📋 FASE 7: TESTE COLABORADOR")
+    # Test 8: Login as colaborador
+    print("\n📋 FASE 8: TESTE COLABORADOR")
     if tester.test_login("colab1", "123456"):
         tester.test_get_me()
         tester.test_get_produtos()
         tester.test_get_clientes()
+        # Test boletos access for colaborador
+        tester.test_get_boletos()
     
     # Print final results
     print("\n" + "=" * 50)
