@@ -1763,8 +1763,17 @@ def main():
         # Test edge cases
         tester.test_entrada_mercadoria_edge_cases()
     
-    # Test 10: Login as colaborador
-    print("\n📋 FASE 10: TESTE COLABORADOR")
+    # Test 10: NFe (Notas Fiscais) System - COMPREHENSIVE TESTING
+    print("\n📋 FASE 10: SISTEMA DE NOTAS FISCAIS (NFe) - TESTE COMPLETO")
+    # Re-login as admin to ensure proper permissions for NFe testing
+    if not tester.test_login("admin", "admin123"):
+        print("❌ Admin re-login failed for NFe tests")
+    else:
+        # Run comprehensive NFe system test
+        tester.test_comprehensive_nfe_system()
+    
+    # Test 11: Login as colaborador
+    print("\n📋 FASE 11: TESTE COLABORADOR")
     if tester.test_login("colab1", "123456"):
         tester.test_get_me()
         tester.test_get_produtos()
@@ -1775,6 +1784,8 @@ def main():
         tester.test_fechamento_caixa_today()
         # Test entrada de mercadorias access for colaborador
         tester.test_get_entradas_mercadorias()
+        # Test NFe access for colaborador
+        tester.test_get_notas_fiscais()
     
     # Print final results
     print("\n" + "=" * 50)
