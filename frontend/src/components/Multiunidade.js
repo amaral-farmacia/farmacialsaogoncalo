@@ -162,7 +162,9 @@ const Multiunidade = ({ user }) => {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Gestão Multiunidade</h1>
-          <p className="text-gray-600">Gerencie todas as unidades da farmácia</p>
+          <p className="text-gray-600">
+            {user.role === 'admin' ? 'Visão consolidada de todas as unidades' : 'Informações da sua unidade'}
+          </p>
           {unidadeAtual && (
             <Badge className="mt-2 bg-emerald-100 text-emerald-800">
               Unidade Atual: {unidadeAtual.nome}
