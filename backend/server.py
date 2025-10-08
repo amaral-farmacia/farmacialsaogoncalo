@@ -584,7 +584,7 @@ async def init_db():
             {
                 "id": str(uuid.uuid4()),
                 "produto_id": produtos[0]["id"],  # Paracetamol
-                "unidade_origem_id": unidade_principal_id,
+                "unidade_origem_id": unidade_id,
                 "unidade_destino_id": unidades_extras[0]["id"],
                 "quantidade": 50,
                 "status": "pendente",
@@ -595,8 +595,8 @@ async def init_db():
             {
                 "id": str(uuid.uuid4()),
                 "produto_id": produtos[1]["id"],  # Dipirona
-                "unidade_origem_id": unidade_principal_id,
-                "unidade_destino_id": unidades_extras[1]["id"],
+                "unidade_origem_id": unidade_id,
+                "unidade_destino_id": unidades_extras[0]["id"],
                 "quantidade": 30,
                 "status": "confirmada",
                 "observacoes": "Reposição de estoque",
