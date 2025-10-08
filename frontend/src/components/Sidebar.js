@@ -15,7 +15,8 @@ import {
   Receipt,
   Calculator,
   PackagePlus,
-  ArrowRightLeft
+  ArrowRightLeft,
+  Building2
 } from "lucide-react";
 
 const Sidebar = ({ user, onLogout }) => {
