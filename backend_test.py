@@ -325,6 +325,130 @@ class FarmaciaAPITester:
         
         return success
 
+    def test_get_boletos(self):
+        """Test get all boletos with automatic status updates"""
+        success, response = self.run_test(
+            "Get Boletos",
+            "GET",
+            "boletos",
+            200
+        )
+        if success:
+            print(f"   Found {len(response)} boletos")
+            # Check for sample data
+            fornecedores = [b['fornecedor'] for b in response]
+            expected_fornecedores = ['Cimed', 'Boticário', 'Distribuidora São Paulo']
+            
+            for fornecedor in expected_fornecedores:
+                if fornecedor in fornecedores:
+                    print(f"   ✅ Sample data found: {fornecedor}")
+                else:
+                    print(f"   ❌ Sample data missing: {fornecedor}")
+            
+            # Show boletos by status
+            status_count = {}
+            for boleto in response:
+                status = boleto['status']
+                status_count[status] = status_count.get(status, 0) + 1
+                print(f"   - {boleto['fornecedor']}: R$ {boleto['valor']} ({status}) - Venc: {boleto['data_vencimento']}")
+            
+            print(f"   Status summary: {status_count}")
+        
+        return success, response if success else []
+
+    def test_create_boleto(self):
+        """Test create new boleto"""
+        boleto_data = {
+            "fornecedor": "Farmácia Teste Ltda",
+            "valor": 750.00,
+            "data_vencimento": "2025-10-15",
+            "descricao": "Compra de medicamentos para teste",
+            "categoria": "medicamentos",
+            "numero_boleto": "TEST123456"
+        }
+        
+        success, response = self.run_test(
+            "Create Boleto",
+            "POST",
+            "boletos",
+            200,
+            data=boleto_data
+        )
+        
+        if success:
+            self.created_items.setdefault('boletos', []).append(response['id'])
+            print(f"   Created boleto: {response['fornecedor']} - R$ {response['valor']} (ID: {response['id']})")
+            print(f"   Status: {response['status']}, Vencimento: {response['data_vencimento']}")
+        
+        return success, response if success else {}
+
+    def test_pagar_boleto(self, boletos):
+        """Test mark boleto as paid"""
+        if not boletos:
+            print("❌ No boletos available for payment test")
+            return False
+        
+        # Find a boleto that's not already paid
+        boleto_to_pay = None
+        for boleto in boletos:
+            if boleto['status'] != 'pago':
+                boleto_to_pay = boleto
+                break
+        
+        if not boleto_to_pay:
+            print("❌ No unpaid boletos available for payment test")
+            return False
+        
+        pagamento_data = {
+            "data_pagamento": datetime.now().strftime("%Y-%m-%d"),
+            "valor_pago": boleto_to_pay['valor']
+        }
+        
+        success, response = self.run_test(
+            f"Pay Boleto - {boleto_to_pay['fornecedor']}",
+            "PUT",
+            f"boletos/{boleto_to_pay['id']}/pagar",
+            200,
+            data=pagamento_data
+        )
+        
+        if success:
+            print(f"   Marked boleto as paid: R$ {boleto_to_pay['valor']}")
+        
+        return success
+
+    def test_dashboard_stats(self):
+        """Test dashboard stats including boletos data"""
+        success, response = self.run_test(
+            "Dashboard - Stats with Boletos",
+            "GET",
+            "dashboard/stats",
+            200
+        )
+        
+        if success:
+            print(f"   Total produtos: {response.get('total_produtos', 0)}")
+            print(f"   Total clientes: {response.get('total_clientes', 0)}")
+            print(f"   Produtos estoque baixo: {response.get('produtos_estoque_baixo', 0)}")
+            print(f"   Fiados pendentes: {response.get('fiados_pendentes', 0)}")
+            
+            # Check boletos data specifically
+            boletos_vencidos = response.get('boletos_vencidos', 0)
+            boletos_a_pagar = response.get('boletos_a_pagar', 0)
+            boletos_a_pagar_valor = response.get('boletos_a_pagar_valor', 0)
+            
+            print(f"   🧾 Boletos vencidos: {boletos_vencidos}")
+            print(f"   🧾 Boletos a pagar: {boletos_a_pagar}")
+            print(f"   🧾 Valor a pagar: R$ {boletos_a_pagar_valor}")
+            
+            # Check if boletos details are included
+            if 'boletos_vencidos_detalhes' in response:
+                print(f"   ✅ Boletos vencidos detalhes included ({len(response['boletos_vencidos_detalhes'])} items)")
+            else:
+                print(f"   ❌ Boletos vencidos detalhes missing")
+        
+        return success
+
 def main():
     print("🏥 SISTEMA DE FARMÁCIA - TESTE DE APIs")
     print("=" * 50)
