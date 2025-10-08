@@ -631,6 +631,35 @@ async def pagar_boleto(boleto_id: str, pagamento: PagamentoBoleto, current_user:
     
     return {"message": "Boleto marcado como pago"}
 
+@api_router.put("/boletos/{boleto_id}", response_model=Boleto)
+async def update_boleto(boleto_id: str, boleto_data: BoletoCreate, current_user: UserBase = Depends(get_current_user)):
+    """Edita um boleto existente"""
+    boleto_dict = boleto_data.dict()
+    
+    result = await db.boletos.update_one(
+        {"id": boleto_id, "unidade_id": current_user.unidade_id},
+        {"$set": boleto_dict}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Boleto não encontrado")
+    
+    updated_boleto = await db.boletos.find_one({"id": boleto_id})
+    return Boleto(**updated_boleto)
+
+@api_router.delete("/boletos/{boleto_id}")
+async def delete_boleto(boleto_id: str, current_user: UserBase = Depends(get_current_user)):
+    """Deleta um boleto"""
+    result = await db.boletos.delete_one({
+        "id": boleto_id, 
+        "unidade_id": current_user.unidade_id
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Boleto não encontrado")
+    
+    return {"message": "Boleto deletado com sucesso"}
+
 # Fechamento de Caixa routes
 @api_router.get("/caixa/fechamento/{data}")
 async def get_fechamento_caixa(data: str, current_user: UserBase = Depends(get_current_user)):
