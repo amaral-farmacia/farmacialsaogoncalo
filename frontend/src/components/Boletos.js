@@ -31,6 +31,8 @@ const Boletos = ({ user }) => {
   const [filteredBoletos, setFilteredBoletos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [pagamentoDialogOpen, setPagamentoDialogOpen] = useState(false);
   const [boletoSelecionado, setBoletoSelecionado] = useState(null);
   const [filtroStatus, setFiltroStatus] = useState("todos");
