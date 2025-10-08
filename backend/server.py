@@ -301,7 +301,42 @@ async def init_db():
     # Verificar se usuário angical existe (para forçar reinicialização se necessário)
     angical_exists = await db.users.find_one({"username": "angical"})
     
-    if not admin_exists or not angical_exists:
+    # If angical user doesn't exist, create it along with its unit
+    if not angical_exists:
+        # Create segunda unidade - São Gonçalo do Angical
+        unidade_angical_id = str(uuid.uuid4())
+        
+        # Create angical user
+        angical_user = {
+            "id": str(uuid.uuid4()),
+            "username": "angical",
+            "password_hash": hash_password("angical123"),
+            "full_name": "Colaborador Angical",
+            "role": "colaborador",
+            "unidade_id": unidade_angical_id,
+            "created_at": datetime.now(timezone.utc)
+        }
+        
+        await db.users.insert_one(angical_user)
+        
+        # Create angical unit
+        angical_unit = {
+            "id": unidade_angical_id,
+            "nome": "Farmácia São Gonçalo do Angical",
+            "endereco": "Rua Central, 456 - Centro, São Gonçalo do Angical - BA",
+            "telefone": "(77) 99999-2222",
+            "email": "angical@farmaciasaogoncalo.com.br",
+            "cnpj": "12.345.678/0001-02",
+            "responsavel": "Ana Paula Santos",
+            "ativa": True,
+            "created_at": datetime.now(timezone.utc)
+        }
+        
+        await db.unidades.insert_one(angical_unit)
+        
+        print("✅ Angical user and unit created successfully")
+    
+    if not admin_exists:
         # Create default unidade
         unidade_id = str(uuid.uuid4())
         
