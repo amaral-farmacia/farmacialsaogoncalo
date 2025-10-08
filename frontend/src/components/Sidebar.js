@@ -12,7 +12,6 @@ import {
   Percent,
   BarChart3,
   Building2,
-  ArrowRightLeft,
   FileText,
   Receipt,
   Calculator,
