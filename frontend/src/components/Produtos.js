@@ -540,11 +540,58 @@ const Produtos = ({ user }) => {
               </CardHeader>
               
               <CardContent className="pt-0 space-y-4">
-                {/* Price */}
-                <div className="bg-gradient-to-r from-emerald-50 to-cyan-50 p-3 rounded-lg">
-                  <p className="text-2xl font-bold text-emerald-900">
-                    {formatCurrency(produto.preco)}
-                  </p>
+                {/* Preços e Lucro */}
+                <div className="space-y-3">
+                  {produto.preco_custo && produto.preco_custo > 0 ? (
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-red-50 p-3 rounded-lg">
+                        <div className="text-center">
+                          <p className="text-xs text-red-700 mb-1">Custo</p>
+                          <p className="font-bold text-red-900">
+                            {formatCurrency(produto.preco_custo)}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-green-50 p-3 rounded-lg">
+                        <div className="text-center">
+                          <p className="text-xs text-green-700 mb-1">Venda</p>
+                          <p className="font-bold text-green-900">
+                            {formatCurrency(produto.preco)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-gradient-to-r from-emerald-50 to-cyan-50 p-3 rounded-lg">
+                      <div className="text-center">
+                        <p className="text-xs text-emerald-700 mb-1">Preço de Venda</p>
+                        <p className="text-2xl font-bold text-emerald-900">
+                          {formatCurrency(produto.preco)}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Lucro */}
+                  {produto.preco_custo && produto.preco_custo > 0 && (
+                    <div className="bg-blue-50 p-3 rounded-lg">
+                      <div className="grid grid-cols-2 gap-3 text-center">
+                        <div>
+                          <p className="text-xs text-blue-700 mb-1">Lucro/Un.</p>
+                          <p className="font-bold text-blue-900 text-sm">
+                            {formatCurrency(produto.preco - produto.preco_custo)}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-blue-700 mb-1">Margem</p>
+                          <p className="font-bold text-blue-900 text-sm">
+                            {(((produto.preco - produto.preco_custo) / produto.preco_custo) * 100).toFixed(1)}%
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 
                 {/* Stock Status */}
