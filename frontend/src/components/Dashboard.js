@@ -43,6 +43,7 @@ const Dashboard = ({ user }) => {
     fim: new Date().toISOString().split('T')[0]
   });
   const [vendasPeriodo, setVendasPeriodo] = useState(null);
+  const [fechamentoCaixa, setFechamentoCaixa] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
