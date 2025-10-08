@@ -179,9 +179,9 @@ const Multiunidade = ({ user }) => {
           </DialogTrigger>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Criar Nova Unidade</DialogTitle>
+              <DialogTitle>Cadastrar Unidade</DialogTitle>
               <DialogDescription>
-                Adicione uma nova unidade da farmácia
+                Adicione uma nova unidade ao sistema
               </DialogDescription>
             </DialogHeader>
             
