@@ -1151,7 +1151,8 @@ async def get_usuarios(current_user: UserBase = Depends(get_current_user)):
     if current_user.role != 'admin':
         raise HTTPException(status_code=403, detail="Acesso negado")
     
-    users = await db.users.find({"unidade_id": current_user.unidade_id}).to_list(1000)
+    # Admin can see all users from all units for management purposes
+    users = await db.users.find({}).to_list(1000)
     result = []
     for user_doc in users:
         user_obj = UserBase(**user_doc)
