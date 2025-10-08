@@ -15,7 +15,8 @@ import {
   FileText,
   Receipt,
   Calculator,
-  PackagePlus
+  PackagePlus,
+  ArrowRightLeft
 } from "lucide-react";
 
 const Sidebar = ({ user, onLogout }) => {
