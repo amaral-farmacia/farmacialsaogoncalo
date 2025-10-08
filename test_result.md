@@ -376,3 +376,15 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ NFE AUTHENTICATION AND ACCESS CONTROL VERIFIED: All NFe routes require authentication - unauthenticated requests correctly return 403 Forbidden (FastAPI HTTPBearer behavior). Admin credentials (username: admin, password: admin123) working perfectly for all NFe operations. Unidade_id filtering working correctly: users can only access NFes from their own unit. Access control implicit in API design: all queries filtered by current_user.unidade_id. Authentication token properly validated for all CRUD operations. Security properly implemented: no unauthorized access possible to NFe data. All authentication and access control requirements satisfied."
+
+  - task: "Angical User Creation and Authentication"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ COMPREHENSIVE ANGICAL USER SYSTEM TESTING COMPLETED SUCCESSFULLY: User Creation verified - angical user exists in database with correct properties (username: angical, full_name: Colaborador Angical, role: colaborador). Authentication working perfectly - angical/angical123 credentials successfully authenticate and return valid JWT token. Unit Assignment verified - user correctly assigned to 'Farmácia São Gonçalo do Angical' unit with proper unit ID, address, phone, email, CNPJ, and responsible person. Access Control working - angical user can access protected endpoints (/auth/me, /produtos, /clientes, /boletos, /dashboard/stats) and data is properly filtered by unit (0 products, 0 clients, 0 boletos for new unit as expected). User Management verified - admin can see angical user in users list via GET /api/usuarios. All authentication flows, unit filtering, and access control mechanisms working correctly. Fixed database initialization issue and user endpoint filtering to show all users for admin. 100% success rate on angical user system tests."
