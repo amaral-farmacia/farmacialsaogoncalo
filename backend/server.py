@@ -1629,6 +1629,23 @@ async def create_unidade(unidade_data: UnidadeCreate, current_user: UserBase = D
     
     return unidade_obj
 
+@api_router.put("/unidades/{unidade_id}")
+async def update_unidade(unidade_id: str, unidade_data: UnidadeCreate, current_user: UserBase = Depends(get_current_user)):
+    """Atualiza uma unidade existente"""
+    if current_user.role != 'admin':
+        raise HTTPException(status_code=403, detail="Apenas administradores podem atualizar unidades")
+    
+    result = await db.unidades.update_one(
+        {"id": unidade_id},
+        {"$set": unidade_data.dict()}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Unidade não encontrada")
+    
+    updated_unidade = await db.unidades.find_one({"id": unidade_id})
+    return Unidade(**updated_unidade)
+
 @api_router.get("/dashboard/consolidado")
 async def get_dashboard_consolidado(current_user: UserBase = Depends(get_current_user)):
     """Retorna dados consolidados de todas as unidades"""
