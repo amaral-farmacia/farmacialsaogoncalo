@@ -13,7 +13,8 @@ class FarmaciaAPITester:
         self.created_items = {
             'produtos': [],
             'clientes': [],
-            'vendas': []
+            'vendas': [],
+            'boletos': []
         }
 
     def run_test(self, name, method, endpoint, expected_status, data=None, headers=None):
