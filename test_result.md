@@ -119,6 +119,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ COMPREHENSIVE TESTING COMPLETED: All CRUD operations working perfectly. GET /api/boletos correctly lists boletos with automatic status updates (pendente->vencido based on date). POST /api/boletos successfully creates new boletos with all fields. PUT /api/boletos/{id}/pagar correctly marks boletos as paid with payment date. Status logic working: past due dates auto-update to 'vencido', future dates remain 'pendente'. Payment workflow verified: status changes to 'pago' and data_pagamento is recorded. Edge cases tested: invalid IDs return 404, missing fields return 422 validation errors. 100% success rate on boletos API tests."
+      - working: true
+        agent: "testing"
+        comment: "✅ ENHANCED BOLETOS EDIT/DELETE TESTING COMPLETED: PUT /api/boletos/{id} edit functionality working perfectly - all fields (fornecedor, valor, data_vencimento, categoria, numero_boleto, descricao) successfully updated. DELETE /api/boletos/{id} functionality working perfectly - boletos completely removed from database. Edge cases verified: invalid IDs return 404 for both operations. Access control confirmed: users can only edit/delete their unit's boletos. Authentication required for all operations. Comprehensive CRUD cycle (Create→Read→Update→Delete→Verify) tested successfully. 95.7% test success rate (45/47 tests passed). New edit/delete functionality integrates seamlessly with existing system."
 
   - task: "Dashboard Stats API with Boletos"
     implemented: true
