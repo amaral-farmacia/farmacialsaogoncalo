@@ -16,7 +16,8 @@ import {
   Calculator,
   PackagePlus,
   ArrowRightLeft,
-  Building2
+  Building2,
+  TrendingUp
 } from "lucide-react";
 
 const Sidebar = ({ user, onLogout }) => {
