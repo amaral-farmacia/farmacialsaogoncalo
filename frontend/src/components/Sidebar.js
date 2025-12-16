@@ -36,6 +36,7 @@ const Sidebar = ({ user, onLogout }) => {
       { path: "/relatorios", icon: BarChart3, label: "Relatórios" },
       { path: "/dashboard-unidades", icon: Building2, label: "Dashboard Unidades" }
     ] : []),
+    { path: "/relatorio-lucro", icon: TrendingUp, label: "Relatório de Lucro" },
     { path: "/boletos", icon: Receipt, label: "Boletos" },
     { path: "/fechamento", icon: Calculator, label: "Fechamento" },
     ...(user.role === 'admin' ? [
