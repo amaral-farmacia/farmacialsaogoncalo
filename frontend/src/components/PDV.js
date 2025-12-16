@@ -418,13 +418,13 @@ const PDV = ({ user }) => {
                             +10
                           </Button>
                         </div>
-                      </div>
                         
+                        {/* Botão de remover */}
                         <Button
                           variant="destructive"
                           size="sm"
                           onClick={() => removerItem(item.id)}
-                          className="w-8 h-8 p-0"
+                          className="w-8 h-8 p-0 mt-2"
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>
