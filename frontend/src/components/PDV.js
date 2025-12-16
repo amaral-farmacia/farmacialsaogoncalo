@@ -128,9 +128,15 @@ const PDV = ({ user }) => {
       return;
     }
     
-    const produto = carrinho.find(item => item.id === id);
-    if (novaQuantidade > produto.quantidade) {
-      toast.error('Quantidade maior que o estoque disponível');
+    // Encontrar o produto original no estoque para verificar disponibilidade
+    const produtoOriginal = produtos.find(p => p.id === id);
+    if (!produtoOriginal) {
+      toast.error('Produto não encontrado');
+      return;
+    }
+    
+    if (novaQuantidade > produtoOriginal.quantidade) {
+      toast.error(`Quantidade solicitada (${novaQuantidade}) maior que o estoque disponível (${produtoOriginal.quantidade})`);
       return;
     }
     
@@ -139,6 +145,8 @@ const PDV = ({ user }) => {
         ? { ...item, quantidade: novaQuantidade }
         : item
     ));
+    
+    toast.success(`Quantidade alterada para ${novaQuantidade}`);
   };
 
   const removerItem = (id) => {
