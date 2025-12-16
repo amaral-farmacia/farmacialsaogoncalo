@@ -2507,6 +2507,108 @@ async def get_dre(
         }
     }
 
+@api_router.get("/clube-vantagens/top-clientes")
+async def get_top_clientes_clube_vantagens(current_user: UserBase = Depends(get_current_user)):
+    """Top 5 clientes com mais compras no último mês para clube de vantagens"""
+    
+    # Período do último mês
+    hoje = datetime.now()
+    inicio_mes = hoje.replace(day=1, hour=0, minute=0, second=0, microsecond=0, tzinfo=timezone.utc)
+    
+    # Buscar todas as vendas do último mês
+    vendas = await db.vendas.find({
+        "unidade_id": current_user.unidade_id,
+        "created_at": {"$gte": inicio_mes}
+    }).to_list(5000)
+    
+    # Agrupar vendas por cliente
+    vendas_por_cliente = {}
+    for venda in vendas:
+        cliente_id = venda.get("cliente_id")
+        if cliente_id:  # Apenas vendas com cliente identificado
+            valor = venda.get("total", 0)
+            if cliente_id not in vendas_por_cliente:
+                vendas_por_cliente[cliente_id] = {
+                    "total_compras": 0,
+                    "total_transacoes": 0,
+                    "ticket_medio": 0
+                }
+            vendas_por_cliente[cliente_id]["total_compras"] += valor
+            vendas_por_cliente[cliente_id]["total_transacoes"] += 1
+    
+    # Calcular ticket médio e buscar dados dos clientes
+    top_clientes = []
+    for cliente_id, dados in vendas_por_cliente.items():
+        cliente = await db.clientes.find_one({"id": cliente_id, "unidade_id": current_user.unidade_id})
+        if cliente:
+            ticket_medio = dados["total_compras"] / dados["total_transacoes"]
+            top_clientes.append({
+                "cliente_id": cliente_id,
+                "nome": cliente["nome"],
+                "cpf": cliente["cpf"],
+                "telefone": cliente.get("telefone", ""),
+                "total_compras": dados["total_compras"],
+                "total_transacoes": dados["total_transacoes"],
+                "ticket_medio": ticket_medio,
+                "desconto_clube": 10.0,  # 10% de desconto
+                "status_clube": "ativo"
+            })
+    
+    # Ordenar pelos maiores compradores e pegar top 5
+    top_clientes.sort(key=lambda x: x["total_compras"], reverse=True)
+    top_5_clientes = top_clientes[:5]
+    
+    return {
+        "periodo_analise": {
+            "inicio": inicio_mes.isoformat(),
+            "fim": hoje.isoformat(),
+            "mes_corrente": True
+        },
+        "clube_vantagens": {
+            "desconto_percentual": 10.0,
+            "total_clientes_elegíveis": len(top_5_clientes),
+            "criterio": "top_5_compradores_mes"
+        },
+        "top_clientes": top_5_clientes,
+        "estatisticas": {
+            "total_clientes_com_compras": len(vendas_por_cliente),
+            "total_vendas_periodo": sum(dados["total_compras"] for dados in vendas_por_cliente.values()),
+            "valor_medio_top_5": sum(cliente["total_compras"] for cliente in top_5_clientes) / len(top_5_clientes) if top_5_clientes else 0
+        }
+    }
+
+@api_router.get("/clube-vantagens/verificar-cliente/{cliente_id}")
+async def verificar_desconto_clube(cliente_id: str, current_user: UserBase = Depends(get_current_user)):
+    """Verifica se cliente tem direito ao desconto do clube de vantagens"""
+    
+    # Buscar os top 5 clientes atuais
+    top_clientes_response = await get_top_clientes_clube_vantagens(current_user)
+    top_clientes = top_clientes_response["top_clientes"]
+    
+    # Verificar se o cliente está no top 5
+    cliente_clube = None
+    for cliente in top_clientes:
+        if cliente["cliente_id"] == cliente_id:
+            cliente_clube = cliente
+            break
+    
+    if cliente_clube:
+        return {
+            "tem_desconto": True,
+            "desconto_percentual": 10.0,
+            "cliente": cliente_clube,
+            "posicao_ranking": top_clientes.index(cliente_clube) + 1,
+            "message": f"Cliente {cliente_clube['nome']} tem direito a 10% de desconto!"
+        }
+    else:
+        return {
+            "tem_desconto": False,
+            "desconto_percentual": 0.0,
+            "cliente": None,
+            "posicao_ranking": None,
+            "message": "Cliente não está no clube de vantagens"
+        }
+
 # Include the router in the main app
 app.include_router(api_router)
 
