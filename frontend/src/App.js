@@ -111,11 +111,14 @@ function App() {
                 {user.role === 'admin' && (
                   <>
                     <Route path="/relatorios" element={<Relatorios user={user} />} />
+                    <Route path="/relatorio-lucro" element={<RelatorioLucro user={user} />} />
                     <Route path="/dashboard-unidades" element={<DashboardUnidades user={user} />} />
                     <Route path="/usuarios" element={<Usuarios user={user} />} />
                     <Route path="/notas-fiscais" element={<NotasFiscais user={user} />} />
                   </>
                 )}
+                {/* Relatório de lucro para colaboradores também */}
+                <Route path="/relatorio-lucro" element={<RelatorioLucro user={user} />} />
                 <Route path="*" element={<Navigate to={user.role === 'admin' ? "/" : "/pdv"} />} />
               </Routes>
             </div>
