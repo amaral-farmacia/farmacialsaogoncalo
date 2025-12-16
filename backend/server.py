@@ -730,6 +730,107 @@ async def update_produto(produto_id: str, produto_data: ProdutoCreate, current_u
     updated_produto = await db.produtos.find_one({"id": produto_id})
     return Produto(**updated_produto)
 
+@api_router.get("/produtos/{produto_id}/lucro")
+async def calcular_lucro_produto(produto_id: str, current_user: UserBase = Depends(get_current_user)):
+    """Calcula lucro e porcentagem de um produto"""
+    produto = await db.produtos.find_one({"id": produto_id, "unidade_id": current_user.unidade_id})
+    
+    if not produto:
+        raise HTTPException(status_code=404, detail="Produto não encontrado")
+    
+    preco_venda = produto.get("preco", 0)
+    preco_custo = produto.get("preco_custo", 0)
+    quantidade = produto.get("quantidade", 0)
+    
+    lucro_unitario = preco_venda - preco_custo
+    lucro_total = lucro_unitario * quantidade
+    
+    if preco_custo > 0:
+        porcentagem_lucro = (lucro_unitario / preco_custo) * 100
+        porcentagem_markup = (lucro_unitario / preco_venda) * 100
+    else:
+        porcentagem_lucro = 0
+        porcentagem_markup = 0
+    
+    return {
+        "produto_id": produto_id,
+        "produto_nome": produto["nome"],
+        "preco_venda": preco_venda,
+        "preco_custo": preco_custo,
+        "quantidade": quantidade,
+        "lucro_unitario": lucro_unitario,
+        "lucro_total": lucro_total,
+        "porcentagem_lucro": round(porcentagem_lucro, 2),
+        "porcentagem_markup": round(porcentagem_markup, 2),
+        "roi": round(porcentagem_lucro, 2) # Return on Investment
+    }
+
+@api_router.get("/produtos/relatorio-lucro")
+async def relatorio_lucro_produtos(current_user: UserBase = Depends(get_current_user)):
+    """Relatório de lucro de todos os produtos"""
+    produtos = await db.produtos.find({"unidade_id": current_user.unidade_id}).to_list(10000)
+    
+    relatorio = []
+    lucro_total_geral = 0
+    valor_custo_total = 0
+    valor_venda_total = 0
+    
+    for produto in produtos:
+        preco_venda = produto.get("preco", 0)
+        preco_custo = produto.get("preco_custo", 0)
+        quantidade = produto.get("quantidade", 0)
+        
+        lucro_unitario = preco_venda - preco_custo
+        lucro_total = lucro_unitario * quantidade
+        valor_custo_produto = preco_custo * quantidade
+        valor_venda_produto = preco_venda * quantidade
+        
+        if preco_custo > 0:
+            porcentagem_lucro = (lucro_unitario / preco_custo) * 100
+        else:
+            porcentagem_lucro = 0
+        
+        produto_lucro = {
+            "id": produto["id"],
+            "nome": produto["nome"],
+            "codigo_barras": produto["codigo_barras"],
+            "quantidade": quantidade,
+            "preco_custo": preco_custo,
+            "preco_venda": preco_venda,
+            "lucro_unitario": lucro_unitario,
+            "lucro_total": lucro_total,
+            "porcentagem_lucro": round(porcentagem_lucro, 2),
+            "valor_custo_total": valor_custo_produto,
+            "valor_venda_total": valor_venda_produto
+        }
+        
+        relatorio.append(produto_lucro)
+        lucro_total_geral += lucro_total
+        valor_custo_total += valor_custo_produto
+        valor_venda_total += valor_venda_produto
+    
+    # Ordenar por maior lucro total
+    relatorio.sort(key=lambda x: x["lucro_total"], reverse=True)
+    
+    # Calcular margem média geral
+    if valor_custo_total > 0:
+        margem_media_geral = (lucro_total_geral / valor_custo_total) * 100
+    else:
+        margem_media_geral = 0
+    
+    return {
+        "resumo": {
+            "total_produtos": len(produtos),
+            "valor_custo_total": valor_custo_total,
+            "valor_venda_total": valor_venda_total,
+            "lucro_total_geral": lucro_total_geral,
+            "margem_media": round(margem_media_geral, 2)
+        },
+        "produtos": relatorio[:50],  # Top 50 produtos por lucro
+        "top_lucrativos": relatorio[:10],  # Top 10 mais lucrativos
+        "menor_lucro": sorted(relatorio, key=lambda x: x["porcentagem_lucro"])[:5]  # 5 com menor margem
+    }
+
 @api_router.get("/produtos/buscar/{codigo}")
 async def buscar_produto_por_codigo(codigo: str, current_user: UserBase = Depends(get_current_user)):
     produto = await db.produtos.find_one({
