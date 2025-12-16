@@ -366,7 +366,7 @@ const PDV = ({ user }) => {
                           <Input
                             type="number"
                             min="1"
-                            max={item.quantidade} // Máximo baseado no estoque
+                            max={produtos.find(p => p.id === item.id)?.quantidade || 1} // Máximo baseado no estoque real
                             value={item.quantidade}
                             onChange={(e) => {
                               const novaQtd = parseInt(e.target.value) || 1;
