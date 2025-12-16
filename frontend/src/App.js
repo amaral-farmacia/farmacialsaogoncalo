@@ -18,6 +18,7 @@ import FechamentoCaixa from "./components/FechamentoCaixa";
 import EntradaMercadorias from "./components/EntradaMercadorias";
 import TransferenciaProdutos from "./components/TransferenciaProdutos";
 import DashboardUnidades from "./components/DashboardUnidades";
+import RelatorioLucro from "./components/RelatorioLucro";
 import Sidebar from "./components/Sidebar";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
