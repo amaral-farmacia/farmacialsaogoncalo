@@ -126,7 +126,10 @@ class Fiado(BaseModel):
     venda_id: str
     valor: float
     valor_pago: float = 0.0
-    status: str = "pendente"  # pendente, pago_parcial, pago
+    status: str = "pendente"  # pendente, pago_parcial, pago, vencido
+    data_vencimento: str = ""  # Data limite para pagamento
+    data_pagamento: str = ""
+    dias_vencido: int = 0  # Calculado automaticamente
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class PagamentoFiado(BaseModel):
