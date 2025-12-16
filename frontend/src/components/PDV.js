@@ -348,17 +348,38 @@ const PDV = ({ user }) => {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => alterarQuantidade(item.id, item.quantidade - 1)}
+                            onClick={() => alterarQuantidade(item.id, Math.max(1, item.quantidade - 1))}
                             className="w-8 h-8 p-0"
+                            disabled={item.quantidade <= 1}
                           >
                             <Minus className="h-3 w-3" />
                           </Button>
-                          <span className="w-8 text-center font-medium">{item.quantidade}</span>
+                          
+                          <Input
+                            type="number"
+                            min="1"
+                            max={item.quantidade} // Máximo baseado no estoque
+                            value={item.quantidade}
+                            onChange={(e) => {
+                              const novaQtd = parseInt(e.target.value) || 1;
+                              if (novaQtd >= 1) {
+                                alterarQuantidade(item.id, novaQtd);
+                              }
+                            }}
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') {
+                                e.target.blur(); // Remove foco após pressionar Enter
+                              }
+                            }}
+                            className="w-16 h-8 text-center font-medium text-sm border-gray-300"
+                          />
+                          
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => alterarQuantidade(item.id, item.quantidade + 1)}
                             className="w-8 h-8 p-0"
+                            disabled={item.quantidade >= item.quantidade} // Desabilitar se não há estoque
                           >
                             <Plus className="h-3 w-3" />
                           </Button>
