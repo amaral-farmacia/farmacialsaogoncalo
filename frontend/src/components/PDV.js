@@ -351,7 +351,8 @@ const PDV = ({ user }) => {
                         </Badge>
                       </div>
                       
-                      <div className="flex items-center gap-3">
+                      <div className="flex flex-col gap-2">
+                        {/* Controles de Quantidade */}
                         <div className="flex items-center gap-2">
                           <Button
                             variant="outline"
@@ -366,7 +367,7 @@ const PDV = ({ user }) => {
                           <Input
                             type="number"
                             min="1"
-                            max={produtos.find(p => p.id === item.id)?.quantidade || 1} // Máximo baseado no estoque real
+                            max={produtos.find(p => p.id === item.id)?.quantidade || 1}
                             value={item.quantidade}
                             onChange={(e) => {
                               const novaQtd = parseInt(e.target.value) || 1;
@@ -376,10 +377,11 @@ const PDV = ({ user }) => {
                             }}
                             onKeyPress={(e) => {
                               if (e.key === 'Enter') {
-                                e.target.blur(); // Remove foco após pressionar Enter
+                                e.target.blur();
                               }
                             }}
                             className="w-16 h-8 text-center font-medium text-sm border-gray-300"
+                            title="Digite a quantidade ou use as setas"
                           />
                           
                           <Button
@@ -387,11 +389,36 @@ const PDV = ({ user }) => {
                             size="sm"
                             onClick={() => alterarQuantidade(item.id, item.quantidade + 1)}
                             className="w-8 h-8 p-0"
-                            disabled={item.quantidade >= (produtos.find(p => p.id === item.id)?.quantidade || 0)} // Desabilitar se não há mais estoque
+                            disabled={item.quantidade >= (produtos.find(p => p.id === item.id)?.quantidade || 0)}
                           >
                             <Plus className="h-3 w-3" />
                           </Button>
                         </div>
+                        
+                        {/* Botões Rápidos */}
+                        <div className="flex gap-1">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => alterarQuantidade(item.id, Math.min(item.quantidade + 5, produtos.find(p => p.id === item.id)?.quantidade || 0))}
+                            className="h-6 px-2 text-xs"
+                            disabled={item.quantidade >= (produtos.find(p => p.id === item.id)?.quantidade || 0)}
+                            title="Adicionar 5 unidades"
+                          >
+                            +5
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => alterarQuantidade(item.id, Math.min(item.quantidade + 10, produtos.find(p => p.id === item.id)?.quantidade || 0))}
+                            className="h-6 px-2 text-xs"
+                            disabled={item.quantidade >= (produtos.find(p => p.id === item.id)?.quantidade || 0)}
+                            title="Adicionar 10 unidades"
+                          >
+                            +10
+                          </Button>
+                        </div>
+                      </div>
                         
                         <Button
                           variant="destructive"
