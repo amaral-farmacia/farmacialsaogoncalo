@@ -387,7 +387,7 @@ const PDV = ({ user }) => {
                             size="sm"
                             onClick={() => alterarQuantidade(item.id, item.quantidade + 1)}
                             className="w-8 h-8 p-0"
-                            disabled={item.quantidade >= item.quantidade} // Desabilitar se não há estoque
+                            disabled={item.quantidade >= (produtos.find(p => p.id === item.id)?.quantidade || 0)} // Desabilitar se não há mais estoque
                           >
                             <Plus className="h-3 w-3" />
                           </Button>
