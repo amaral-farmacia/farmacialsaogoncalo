@@ -2163,6 +2163,105 @@ async def get_dashboard_unidades(current_user: UserBase = Depends(get_current_us
     
     return resultado
 
+@api_router.get("/relatorios/lucro-mensal")
+async def get_relatorio_lucro_mensal(
+    mes: int = None,
+    ano: int = None,
+    current_user: UserBase = Depends(get_current_user)
+):
+    """Relatório de lucro mensal: vendas - despesas (boletos e outras contas)"""
+    
+    # Se não especificado, usar mês atual
+    if not mes or not ano:
+        agora = datetime.now()
+        mes = agora.month
+        ano = agora.year
+    
+    # Período do mês
+    inicio_mes = datetime(ano, mes, 1, tzinfo=timezone.utc)
+    if mes == 12:
+        fim_mes = datetime(ano + 1, 1, 1, tzinfo=timezone.utc)
+    else:
+        fim_mes = datetime(ano, mes + 1, 1, tzinfo=timezone.utc)
+    
+    # RECEITAS: Vendas do mês
+    vendas = await db.vendas.find({
+        "unidade_id": current_user.unidade_id,
+        "created_at": {"$gte": inicio_mes, "$lt": fim_mes}
+    }).to_list(5000)
+    
+    total_vendas = 0
+    custo_produtos_vendidos = 0
+    vendas_por_metodo = {}
+    
+    for venda in vendas:
+        valor_venda = venda.get("total", 0)
+        total_vendas += valor_venda
+        
+        metodo = venda.get("metodo_pagamento", "outros")
+        vendas_por_metodo[metodo] = vendas_por_metodo.get(metodo, 0) + valor_venda
+        
+        # Calcular custo dos produtos vendidos
+        for item in venda.get("items", []):
+            produto = await db.produtos.find_one({"id": item.get("produto_id")})
+            if produto:
+                custo_unitario = produto.get("preco_custo", 0)
+                quantidade = item.get("quantidade", 0)
+                custo_produtos_vendidos += (custo_unitario * quantidade)
+    
+    # DESPESAS: Boletos pagos no mês
+    boletos_pagos = await db.boletos.find({
+        "unidade_id": current_user.unidade_id,
+        "status": "pago",
+        "data_pagamento": {
+            "$gte": inicio_mes.strftime("%Y-%m-%d"),
+            "$lt": fim_mes.strftime("%Y-%m-%d")
+        }
+    }).to_list(1000)
+    
+    total_boletos = sum(boleto.get("valor", 0) for boleto in boletos_pagos)
+    
+    despesas_por_categoria = {}
+    for boleto in boletos_pagos:
+        categoria = boleto.get("categoria", "outros")
+        valor = boleto.get("valor", 0)
+        despesas_por_categoria[categoria] = despesas_por_categoria.get(categoria, 0) + valor
+    
+    # CÁLCULOS FINAIS
+    lucro_bruto = total_vendas - custo_produtos_vendidos
+    lucro_liquido = lucro_bruto - total_boletos
+    margem_bruta = (lucro_bruto / total_vendas * 100) if total_vendas > 0 else 0
+    margem_liquida = (lucro_liquido / total_vendas * 100) if total_vendas > 0 else 0
+    
+    return {
+        "periodo": {
+            "mes": mes,
+            "ano": ano,
+            "inicio": inicio_mes.isoformat(),
+            "fim": fim_mes.isoformat(),
+            "mes_nome": ["", "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", 
+                        "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"][mes]
+        },
+        "receitas": {
+            "total_vendas": total_vendas,
+            "custo_produtos_vendidos": custo_produtos_vendidos,
+            "lucro_bruto": lucro_bruto,
+            "vendas_por_metodo": vendas_por_metodo,
+            "total_transacoes": len(vendas)
+        },
+        "despesas": {
+            "total_boletos": total_boletos,
+            "despesas_por_categoria": despesas_por_categoria,
+            "total_contas_pagas": len(boletos_pagos)
+        },
+        "resultado": {
+            "lucro_liquido": lucro_liquido,
+            "margem_bruta": round(margem_bruta, 2),
+            "margem_liquida": round(margem_liquida, 2),
+            "roi": round((lucro_liquido / (custo_produtos_vendidos + total_boletos) * 100), 2) if (custo_produtos_vendidos + total_boletos) > 0 else 0
+        }
+    }
+
 @api_router.get("/relatorios/unidade/{unidade_id}")
 async def get_relatorio_unidade(
     unidade_id: str,
