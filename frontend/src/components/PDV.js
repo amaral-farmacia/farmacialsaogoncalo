@@ -347,7 +347,7 @@ const PDV = ({ user }) => {
                           {formatCurrency(item.preco)} x {item.quantidade} = {formatCurrency(item.preco * item.quantidade)}
                         </p>
                         <Badge variant="outline" className="mt-1">
-                          Estoque: {item.quantidade} un.
+                          Disponível: {produtos.find(p => p.id === item.id)?.quantidade || 0} un.
                         </Badge>
                       </div>
                       
