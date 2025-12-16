@@ -2612,6 +2612,157 @@ async def verificar_desconto_clube(cliente_id: str, current_user: UserBase = Dep
             "message": "Cliente não está no clube de vantagens"
         }
 
+@api_router.get("/fiados-vencidos")
+async def get_fiados_vencidos(current_user: UserBase = Depends(get_current_user)):
+    """Lista fiados vencidos com alertas"""
+    
+    hoje = datetime.now().date()
+    fiados = await db.fiados.find({
+        "unidade_id": current_user.unidade_id,
+        "status": {"$in": ["pendente", "pago_parcial"]}
+    }).to_list(1000)
+    
+    fiados_vencidos = []
+    fiados_vencem_hoje = []
+    fiados_vencem_3_dias = []
+    
+    for fiado in fiados:
+        if not fiado.get("data_vencimento"):
+            continue
+            
+        try:
+            data_vencimento = datetime.fromisoformat(fiado["data_vencimento"]).date()
+            dias_diferenca = (hoje - data_vencimento).days
+            
+            # Buscar dados do cliente
+            cliente = await db.clientes.find_one({"id": fiado["cliente_id"]})
+            cliente_nome = cliente["nome"] if cliente else "Cliente não encontrado"
+            cliente_telefone = cliente.get("telefone", "") if cliente else ""
+            
+            fiado_info = {
+                "id": fiado.get("id", str(fiado.get("_id", ""))),
+                "cliente_id": fiado["cliente_id"],
+                "cliente_nome": cliente_nome,
+                "cliente_telefone": cliente_telefone,
+                "valor": fiado["valor"],
+                "valor_pago": fiado.get("valor_pago", 0),
+                "valor_pendente": fiado["valor"] - fiado.get("valor_pago", 0),
+                "data_vencimento": fiado["data_vencimento"],
+                "dias_vencido": dias_diferenca,
+                "status": fiado["status"],
+                "descricao": fiado.get("descricao", ""),
+                "created_at": fiado.get("created_at", "")
+            }
+            
+            if dias_diferenca > 0:  # Vencido
+                fiado_info["status"] = "vencido"
+                fiado_info["alerta"] = "VENCIDO"
+                fiados_vencidos.append(fiado_info)
+                
+                # Atualizar status no banco
+                await db.fiados.update_one(
+                    {"id": fiado.get("id")},
+                    {"$set": {"status": "vencido", "dias_vencido": dias_diferenca}}
+                )
+                
+            elif dias_diferenca == 0:  # Vence hoje
+                fiado_info["alerta"] = "VENCE HOJE"
+                fiados_vencem_hoje.append(fiado_info)
+                
+            elif dias_diferenca >= -3:  # Vence em até 3 dias
+                fiado_info["alerta"] = f"VENCE EM {abs(dias_diferenca)} DIAS"
+                fiados_vencem_3_dias.append(fiado_info)
+                
+        except (ValueError, TypeError):
+            continue
+    
+    # Ordenar por dias vencidos (mais vencido primeiro)
+    fiados_vencidos.sort(key=lambda x: x["dias_vencido"], reverse=True)
+    
+    total_valor_vencido = sum(f["valor_pendente"] for f in fiados_vencidos)
+    total_valor_vence_hoje = sum(f["valor_pendente"] for f in fiados_vencem_hoje)
+    total_valor_vence_3_dias = sum(f["valor_pendente"] for f in fiados_vencem_3_dias)
+    
+    return {
+        "resumo": {
+            "total_vencidos": len(fiados_vencidos),
+            "total_vencem_hoje": len(fiados_vencem_hoje),
+            "total_vencem_3_dias": len(fiados_vencem_3_dias),
+            "valor_total_vencido": total_valor_vencido,
+            "valor_vence_hoje": total_valor_vence_hoje,
+            "valor_vence_3_dias": total_valor_vence_3_dias
+        },
+        "fiados_vencidos": fiados_vencidos,
+        "vencem_hoje": fiados_vencem_hoje,
+        "vencem_em_3_dias": fiados_vencem_3_dias,
+        "data_consulta": hoje.isoformat()
+    }
+
+@api_router.put("/fiados/{fiado_id}/definir-vencimento")
+async def definir_vencimento_fiado(
+    fiado_id: str, 
+    data_vencimento: str,
+    current_user: UserBase = Depends(get_current_user)
+):
+    """Define data de vencimento para um fiado existente"""
+    
+    # Validar data
+    try:
+        datetime.fromisoformat(data_vencimento)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Data de vencimento inválida. Use formato YYYY-MM-DD")
+    
+    result = await db.fiados.update_one(
+        {"id": fiado_id, "unidade_id": current_user.unidade_id},
+        {"$set": {"data_vencimento": data_vencimento}}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Fiado não encontrado")
+    
+    return {"message": "Data de vencimento definida com sucesso"}
+
+@api_router.get("/alertas-fiados")
+async def get_alertas_fiados(current_user: UserBase = Depends(get_current_user)):
+    """Alertas rápidos sobre fiados para dashboard"""
+    
+    fiados_data = await get_fiados_vencidos(current_user)
+    
+    alertas = []
+    
+    if fiados_data["resumo"]["total_vencidos"] > 0:
+        alertas.append({
+            "tipo": "CRITICO",
+            "titulo": f"{fiados_data['resumo']['total_vencidos']} fiado(s) vencido(s)",
+            "valor": fiados_data["resumo"]["valor_total_vencido"],
+            "icone": "alert-triangle",
+            "cor": "red"
+        })
+    
+    if fiados_data["resumo"]["total_vencem_hoje"] > 0:
+        alertas.append({
+            "tipo": "URGENTE",
+            "titulo": f"{fiados_data['resumo']['total_vencem_hoje']} fiado(s) vencem hoje",
+            "valor": fiados_data["resumo"]["valor_vence_hoje"],
+            "icone": "clock",
+            "cor": "orange"
+        })
+    
+    if fiados_data["resumo"]["total_vencem_3_dias"] > 0:
+        alertas.append({
+            "tipo": "AVISO",
+            "titulo": f"{fiados_data['resumo']['total_vencem_3_dias']} fiado(s) vencem em 3 dias",
+            "valor": fiados_data["resumo"]["valor_vence_3_dias"],
+            "icone": "calendar",
+            "cor": "yellow"
+        })
+    
+    return {
+        "alertas": alertas,
+        "total_alertas": len(alertas),
+        "tem_alertas_criticos": any(a["tipo"] == "CRITICO" for a in alertas)
+    }
+
 # Include the router in the main app
 app.include_router(api_router)
 
