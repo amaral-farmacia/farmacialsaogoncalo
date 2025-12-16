@@ -1392,6 +1392,176 @@ async def create_entrada_mercadoria(entrada_data: EntradaMercadoriaCreate, curre
     
     return entrada_obj
 
+@api_router.post("/entrada-rapida")
+async def entrada_rapida_mercadoria(
+    codigo_barras: str,
+    quantidade: int,
+    preco_custo: float,
+    preco_venda: float,
+    lote: str = "",
+    data_validade: str = "",
+    current_user: UserBase = Depends(get_current_user)
+):
+    """Entrada rápida de mercadoria por código de barras"""
+    
+    # Buscar produto existente
+    produto_existente = await db.produtos.find_one({
+        "codigo_barras": codigo_barras,
+        "unidade_id": current_user.unidade_id
+    })
+    
+    if produto_existente:
+        # Produto já existe - apenas atualizar estoque e preços
+        resultado = await db.produtos.update_one(
+            {"id": produto_existente["id"]},
+            {
+                "$inc": {"quantidade": quantidade},
+                "$set": {
+                    "preco_custo": preco_custo,
+                    "preco": preco_venda
+                }
+            }
+        )
+        
+        # Registrar entrada
+        entrada_data = {
+            "produto_id": produto_existente["id"],
+            "quantidade": quantidade,
+            "preco_custo": preco_custo,
+            "preco_venda": preco_venda,
+            "lote": lote,
+            "data_validade": data_validade,
+            "fornecedor": "",
+            "localizacao": produto_existente.get("localizacao", ""),
+            "valor_total_custo": quantidade * preco_custo,
+            "valor_total_venda": quantidade * preco_venda,
+            "lucro_unitario": preco_venda - preco_custo,
+            "margem_lucro": ((preco_venda - preco_custo) / preco_custo) * 100 if preco_custo > 0 else 0,
+            "usuario_id": current_user.id,
+            "unidade_id": current_user.unidade_id,
+            "created_at": datetime.now(timezone.utc)
+        }
+        
+        entrada_obj = EntradaMercadoria(**entrada_data)
+        await db.entradas_mercadorias.insert_one(entrada_obj.dict())
+        
+        # Buscar produto atualizado
+        produto_atualizado = await db.produtos.find_one({"id": produto_existente["id"]})
+        
+        return {
+            "tipo": "produto_existente",
+            "produto": Produto(**produto_atualizado),
+            "entrada": entrada_obj,
+            "quantidade_anterior": produto_existente["quantidade"],
+            "quantidade_nova": produto_atualizado["quantidade"],
+            "lucro_unitario": preco_venda - preco_custo,
+            "margem_lucro": ((preco_venda - preco_custo) / preco_custo) * 100 if preco_custo > 0 else 0
+        }
+    
+    else:
+        # Produto não existe - precisa informar dados adicionais
+        raise HTTPException(
+            status_code=404, 
+            detail={
+                "tipo": "produto_nao_encontrado",
+                "codigo_barras": codigo_barras,
+                "message": "Produto não encontrado. Use /produtos para cadastrar primeiro."
+            }
+        )
+
+@api_router.post("/entrada-lote")
+async def entrada_lote_mercadorias(entradas: list, current_user: UserBase = Depends(get_current_user)):
+    """Entrada em lote de várias mercadorias"""
+    resultados = []
+    erros = []
+    
+    for i, entrada in enumerate(entradas):
+        try:
+            codigo_barras = entrada.get("codigo_barras")
+            quantidade = entrada.get("quantidade", 0)
+            preco_custo = entrada.get("preco_custo", 0)
+            preco_venda = entrada.get("preco_venda", 0)
+            
+            if not all([codigo_barras, quantidade > 0, preco_custo >= 0, preco_venda > 0]):
+                erros.append({
+                    "linha": i + 1,
+                    "codigo_barras": codigo_barras,
+                    "erro": "Dados incompletos ou inválidos"
+                })
+                continue
+            
+            # Buscar produto
+            produto = await db.produtos.find_one({
+                "codigo_barras": codigo_barras,
+                "unidade_id": current_user.unidade_id
+            })
+            
+            if produto:
+                # Atualizar produto existente
+                await db.produtos.update_one(
+                    {"id": produto["id"]},
+                    {
+                        "$inc": {"quantidade": quantidade},
+                        "$set": {
+                            "preco_custo": preco_custo,
+                            "preco": preco_venda
+                        }
+                    }
+                )
+                
+                # Registrar entrada
+                entrada_data = {
+                    "id": str(uuid.uuid4()),
+                    "produto_id": produto["id"],
+                    "quantidade": quantidade,
+                    "preco_custo": preco_custo,
+                    "preco_venda": preco_venda,
+                    "lote": entrada.get("lote", ""),
+                    "data_validade": entrada.get("data_validade", ""),
+                    "fornecedor": entrada.get("fornecedor", ""),
+                    "localizacao": produto.get("localizacao", ""),
+                    "valor_total_custo": quantidade * preco_custo,
+                    "valor_total_venda": quantidade * preco_venda,
+                    "lucro_unitario": preco_venda - preco_custo,
+                    "margem_lucro": ((preco_venda - preco_custo) / preco_custo) * 100 if preco_custo > 0 else 0,
+                    "usuario_id": current_user.id,
+                    "unidade_id": current_user.unidade_id,
+                    "created_at": datetime.now(timezone.utc)
+                }
+                
+                await db.entradas_mercadorias.insert_one(entrada_data)
+                
+                resultados.append({
+                    "linha": i + 1,
+                    "codigo_barras": codigo_barras,
+                    "produto_nome": produto["nome"],
+                    "quantidade_adicionada": quantidade,
+                    "lucro_unitario": preco_venda - preco_custo,
+                    "margem_lucro": round(((preco_venda - preco_custo) / preco_custo) * 100, 2) if preco_custo > 0 else 0,
+                    "status": "sucesso"
+                })
+            else:
+                erros.append({
+                    "linha": i + 1,
+                    "codigo_barras": codigo_barras,
+                    "erro": "Produto não encontrado - cadastre primeiro"
+                })
+                
+        except Exception as e:
+            erros.append({
+                "linha": i + 1,
+                "codigo_barras": entrada.get("codigo_barras", ""),
+                "erro": f"Erro interno: {str(e)}"
+            })
+    
+    return {
+        "total_processados": len(entradas),
+        "sucessos": len(resultados),
+        "erros": len(erros),
+        "resultados": resultados,
+        "erros_detalhes": erros
+    }
+
 @api_router.get("/entradas/relatorio")
 async def get_relatorio_entradas(
     data_inicio: str = None,
