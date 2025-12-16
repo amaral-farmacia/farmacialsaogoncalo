@@ -703,7 +703,7 @@ async def get_me(current_user: UserBase = Depends(get_current_user)):
 # Products routes
 @api_router.get("/produtos", response_model=List[Produto])
 async def get_produtos(current_user: UserBase = Depends(get_current_user)):
-    produtos = await db.produtos.find({"unidade_id": current_user.unidade_id}).to_list(1000)
+    produtos = await db.produtos.find({"unidade_id": current_user.unidade_id}).to_list(10000)
     return [Produto(**produto) for produto in produtos]
 
 @api_router.post("/produtos", response_model=Produto)
@@ -1112,7 +1112,7 @@ async def get_dashboard_stats(current_user: UserBase = Depends(get_current_user)
     total_clientes = await db.clientes.count_documents({"unidade_id": current_user.unidade_id})
     
     # Produtos com estoque baixo (quantidade <= estoque_minimo)
-    produtos = await db.produtos.find({"unidade_id": current_user.unidade_id}).to_list(1000)
+    produtos = await db.produtos.find({"unidade_id": current_user.unidade_id}).to_list(10000)
     produtos_estoque_baixo = []
     for produto in produtos:
         estoque_minimo = produto.get("estoque_minimo", 10)
