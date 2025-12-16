@@ -2371,6 +2371,142 @@ async def get_relatorio_unidade(
         }
     }
 
+@api_router.get("/relatorios/dre")
+async def get_dre(
+    tipo: str = "mensal",  # diario ou mensal
+    data: str = None,  # YYYY-MM-DD para diário, YYYY-MM para mensal
+    current_user: UserBase = Depends(get_current_user)
+):
+    """DRE - Demonstração do Resultado do Exercício"""
+    
+    if not data:
+        hoje = datetime.now()
+        if tipo == "diario":
+            data = hoje.strftime("%Y-%m-%d")
+        else:
+            data = hoje.strftime("%Y-%m")
+    
+    # Definir período
+    if tipo == "diario":
+        inicio = datetime.fromisoformat(data + "T00:00:00").replace(tzinfo=timezone.utc)
+        fim = datetime.fromisoformat(data + "T23:59:59").replace(tzinfo=timezone.utc)
+    else:  # mensal
+        ano, mes = map(int, data.split("-"))
+        inicio = datetime(ano, mes, 1, tzinfo=timezone.utc)
+        if mes == 12:
+            fim = datetime(ano + 1, 1, 1, tzinfo=timezone.utc)
+        else:
+            fim = datetime(ano, mes + 1, 1, tzinfo=timezone.utc)
+    
+    # 1. RECEITA BRUTA (Vendas)
+    vendas = await db.vendas.find({
+        "unidade_id": current_user.unidade_id,
+        "created_at": {"$gte": inicio, "$lt": fim}
+    }).to_list(5000)
+    
+    receita_bruta = sum(venda.get("total", 0) for venda in vendas)
+    
+    # 2. DEDUÇÕES DA RECEITA BRUTA (descontos, devoluções)
+    # Por enquanto, assumiremos 0 - pode ser implementado futuramente
+    deducoes = 0
+    receita_liquida = receita_bruta - deducoes
+    
+    # 3. CUSTO DOS PRODUTOS VENDIDOS (CPV)
+    custo_produtos_vendidos = 0
+    for venda in vendas:
+        for item in venda.get("items", []):
+            produto = await db.produtos.find_one({"id": item.get("produto_id")})
+            if produto:
+                custo_unitario = produto.get("preco_custo", 0)
+                quantidade = item.get("quantidade", 0)
+                custo_produtos_vendidos += (custo_unitario * quantidade)
+    
+    # 4. LUCRO BRUTO
+    lucro_bruto = receita_liquida - custo_produtos_vendidos
+    
+    # 5. DESPESAS OPERACIONAIS
+    if tipo == "diario":
+        boletos_periodo = await db.boletos.find({
+            "unidade_id": current_user.unidade_id,
+            "status": "pago",
+            "data_pagamento": data
+        }).to_list(1000)
+    else:
+        boletos_periodo = await db.boletos.find({
+            "unidade_id": current_user.unidade_id,
+            "status": "pago",
+            "data_pagamento": {
+                "$gte": inicio.strftime("%Y-%m-%d"),
+                "$lt": fim.strftime("%Y-%m-%d")
+            }
+        }).to_list(1000)
+    
+    despesas_administrativas = 0
+    despesas_vendas = 0
+    despesas_financeiras = 0
+    despesas_outras = 0
+    
+    for boleto in boletos_periodo:
+        valor = boleto.get("valor", 0)
+        categoria = boleto.get("categoria", "outros")
+        
+        if categoria in ["medicamentos", "material"]:
+            # Já contabilizado no CPV, não duplicar
+            pass
+        elif categoria in ["aluguel", "impostos"]:
+            despesas_administrativas += valor
+        elif categoria in ["servicos"]:
+            despesas_vendas += valor
+        else:
+            despesas_outras += valor
+    
+    total_despesas_operacionais = despesas_administrativas + despesas_vendas + despesas_financeiras + despesas_outras
+    
+    # 6. RESULTADO OPERACIONAL
+    resultado_operacional = lucro_bruto - total_despesas_operacionais
+    
+    # 7. RESULTADO LÍQUIDO (sem imposto de renda para simplificar)
+    resultado_liquido = resultado_operacional
+    
+    # 8. INDICADORES
+    if receita_bruta > 0:
+        margem_bruta = (lucro_bruto / receita_bruta) * 100
+        margem_operacional = (resultado_operacional / receita_bruta) * 100
+        margem_liquida = (resultado_liquido / receita_bruta) * 100
+    else:
+        margem_bruta = margem_operacional = margem_liquida = 0
+    
+    return {
+        "periodo": {
+            "tipo": tipo,
+            "data": data,
+            "inicio": inicio.isoformat(),
+            "fim": fim.isoformat()
+        },
+        "dre": {
+            "receita_bruta": receita_bruta,
+            "deducoes_receita": deducoes,
+            "receita_liquida": receita_liquida,
+            "custo_produtos_vendidos": custo_produtos_vendidos,
+            "lucro_bruto": lucro_bruto,
+            "despesas_operacionais": {
+                "administrativas": despesas_administrativas,
+                "vendas": despesas_vendas,
+                "financeiras": despesas_financeiras,
+                "outras": despesas_outras,
+                "total": total_despesas_operacionais
+            },
+            "resultado_operacional": resultado_operacional,
+            "resultado_liquido": resultado_liquido
+        },
+        "indicadores": {
+            "margem_bruta": round(margem_bruta, 2),
+            "margem_operacional": round(margem_operacional, 2),
+            "margem_liquida": round(margem_liquida, 2),
+            "total_transacoes": len(vendas)
+        }
+    }
+
 # Include the router in the main app
 app.include_router(api_router)
 
